@@ -10,7 +10,7 @@ Shared Logic:
   1)Variables and Methods
     -IPv4 address: a quartet of intergers ranged 0-255 with a period as a delimeter between each inclusive pair-wise pair acting as a typical I.P address.
     -Alias: a character respresentation of what would likely be a username for an employee, quest wifi user, etc
-    -The functionality (semantics aside ofc) of many core functions remains the same, however, the implementation is vastly different
+    -The functionality of many core functions remains relatively the same, however, the implementation is vastly different.
   2)Input/Out and Storage:
     - allows user to specify a file to store new information into a new file or import an existing file
     - allows user to save to a new file or override the current file 
@@ -28,12 +28,16 @@ Shared Logic:
      -A template conveying basic understanding of program flow, typeDef, and elementry I/O. Explores creating a basic terminal stdout UI with basic menu options allowing a user to retrieve information through a basic text file. This file can contain errors, however, only within limits: {DONT FORGET TO UPDATE THIS LATER} it is designed for finding pairs of IPv4 addresses and  aliases, as defined in the shared logic above, and then stored in a user-defined list. Offers user an option to sort the list in either Ascending or Decsending order and (2) save a current list to an existing or new file so long as there is memory available.
 
 2) IPv4-BST
+     - This project-folder contains a program that reads in a text file and creates a singly linked BST from the contents within the file. Searches for IPv4 address and alias pairs 
+       within aforementioned constraints. Allow the user to select from a menu of options to alter, display, and even save the list after modification. Also offers memory leak 
+       protection.
+
      - Files: The project contains a makefile, 9 C source files, and 9 header files.
-        * add.c: prompts the user to enter a new IPv4 pair and re-prompts until completed legaly. Also this file contains a format check as well as, legality, and exists checks
-        * aliasLocation.c: promts the user to enter the first two parts of the IPv4 and then searches for exisitng matches and prints them out if they exist.
-        * delete.c: prompt the user for an alias to search for and delete the corresponding pair if it exists
-        * list.c: prints out line by line all exisitng pairs within the BST
-        * lookup.c: prompt the user to enter a an alias they whish to find the address of
+        * add.c: prompts the user to enter a new IPv4 pair and re-prompts until completed legaly as defined by the shared logic
+        * aliasLocation.c: promts the user to enter the first two numbers of the IPv4 and then searches for exisitng matches and prints them out if they exist.
+        * delete.c: prompt the user for an alias to search for and delete the corresponding pair if it exists. Confirms a second time before deleting.
+        * list.c: prints out, one per line, all exisitng pairs within the BST
+        * lookup.c: prompt the user to enter an alias they wish to find the IPv4 address of.
         * menu.c: contains UI menu and the function used to read in the input from a user's file
         * quit.c: exits in a memory safe manner
         * save.c: saves the current BST to a user inputed file
@@ -95,6 +99,6 @@ Shared Logic:
         *To remove all generated files run the following command:
 
 		        [username@your-linux-server]$make clean
-
+3)
 
 
