@@ -54,10 +54,10 @@
            2) void freeBST(node* tmp) Free malloc mem before exiting 
 
     * save.h contains the declaration of the function that saves the current BST to the user inputted MYSQL table 
-    * save.c: saves the current BST to a user inputed MYSQL table
+    * save.c: saves the current BST to a user inputed MYSQL table or to a user specified text file
     
            1) void save(): used to save the pair BST to a user selected MySQL table
-           2) void fInOrder(node* tmp, FILE* ptr) Helper to recursively save to file in inorder fashion
+           2) void fInOrder(node* tmp, char* tableName) Helper to recursively save to file in inorder fashion
 
     * update.h contains the declaration of the function that is used to update an existing pair within the global BST. 
     * update.c: prompts the user for the alias of a pair they want to update and then prompts for the new address and ensures its valid before updating. Also,
