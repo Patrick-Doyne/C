@@ -9,7 +9,7 @@
 	- These programs successfully mutate, sort, and store data pretaining to a typical internet I.P. address and username. Extra data fields can easily be 		 
   	added.
     
-*Shared Logic*:
+*Shared Logic* :
   
   1) Variables and Methods
     
@@ -37,9 +37,9 @@
 
 ### NOTE: Functionality of last program can be layered for a UI experience* (    Coming soon: Spring 2026 :)    )* ###
 
-*IPv4-List.c*:
+*IPv4-List*:
      
-     - A template conveying basic understanding of program flow, typeDef, and elementry I/O. Explores creating a basic terminal stdout UI with basic menu
+     - Contains a template conveying basic understanding of program flow, typeDef, and elementry I/O. Explores creating a basic terminal stdout UI with basic menu
      options allowing a user to retrieve information through a basic text file. This file can contain errors, however, only within limits: {DONT FORGET TO 
      UPDATE THIS LATER} it is designed for finding pairs of IPv4 addresses and  aliases, as defined in the shared logic above, and then stored in a 
      user-defined list. Offers user an option to sort the list in either Ascending or Decsending order and (2) save a current list to an existing or new file 
@@ -47,8 +47,8 @@
 
  *IPv4-BST*:
      
-     - This project-folder contains a program that reads in a text file and creates a singly linked BST from the contents within the file. 
-     Searches for IPv4 address and alias pairs within aforementioned constraints. Allow the user to select from a menu of options to 
+     - This project-folder contains a program that reads in a text file and creates a doubly linked BST from the contents within the file. 
+     Searches for IPv4 address and alias pairs within aforementioned constraints. Allows the user to select from a menu of options to 
      alter, display, and even save the list after modification. Also offers memory leak protection.
 
      - Files: The project contains a makefile, 9 C source files, and 9 header files.
@@ -94,9 +94,9 @@
     	* node* inOrderReplacement(node* root, node *del): used to help recursively delete a node from BST.
   	
    		* void list(): used to print out the pair BST to the user in terminal.
-
 		* void inOrder(node *tmp): print inorder traversal of BST.
-  		* void* look(): used to find a user inputed pair and returns a pointer to it.
+  		
+    	* void* look(): used to find a user inputed pair and returns a pointer to it.
     	* node* singleSearch(node* tmp, char* alias): helper for look() to find specific node in BST.
 
 		* void save(): used to save the pair BST to a user selected file
