@@ -65,7 +65,7 @@
 
 # Licensing & Attribution: #
         - This README pertains only to the student-created portions within egul_sched.c. Starter code, documentation, and ASCII art assets remain under the original copyright: Prof. Kevin Andrea at GMU
-        - Upon request, for interviews, I am permitted to use the starter code and share it with said recruiter
+        - Upon request, for interviews, I am permitted to use the starter code and share it with said recruiter in a private repo
         - Additionally, all of the documentation for the shell (Strawhat) being used as well as all projects specs for my code
 
 
