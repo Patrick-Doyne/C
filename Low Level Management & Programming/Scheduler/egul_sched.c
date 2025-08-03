@@ -4,7 +4,7 @@
  * - Copyright of Starter Code: Prof. Kevin Andrea, George Mason University. All
 Rights Reserved
  * - Copyright of Student Code: You!
-
+ */
 
 /* Standard Library Includes */
 #include <stdio.h>
