@@ -3,6 +3,15 @@
   - A simplified CPU scheduling simulator written in C for educational purposes, developed as part of CS367: Operating Systems at George Mason University (Fall 2024).  
   - Models a basic process scheduling system using linked queues and bit masks to represent process states and transitions.
 
+## *Tech Stack*:
+
+  - Language: C (C99 standard)  
+  - Compiler Toolchain: GCC (>= 9.x) or Clang  
+  - Build System: Make (via custom `Makefile`)  
+  - Runtime Environment: POSIX-compliant OS (Linux/macOS)  
+  - Memory Debugging: Valgrind for leak detection and profiling  
+  - Shell Integration: Strawhat shell headers and support modules
+
 ## *Features Implemented*:
 
   - Dynamic allocation and deallocation of scheduler and queues  
