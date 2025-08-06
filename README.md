@@ -2,7 +2,7 @@
 
 Welcome! This repository is structured to showcase skills and experience in two fundamental areas of computer science and software engineering: **Low Level Programming** and **Systems**. Below is a description of each subdirectory, designed to help recruiters quickly understand the content and its relevance.
 
-## *Low Level Programming*
+## *Low Level Management & Programming*
 
 This directory highlights expertise in working close to the hardware, demonstrating a strong understanding of computer architecture and performance optimization. Contents typically include:
 
