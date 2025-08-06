@@ -1,0 +1,585 @@
+diff --git a/kern/asst1/stoplight.c b/kern/asst1/stoplight.c
+index aed0f40..2b7cf4f 100644
+--- a/kern/asst1/stoplight.c
++++ b/kern/asst1/stoplight.c
+@@ -15,6 +15,29 @@
+ #include <synch.h> /* use the lock functions from this */
+ #include <machine/spl.h> /* splhigh(), splx() */
+ 
++static
++void
++vehicle_thread(void *unusedpointer,
++		unsigned long vehiclenumber);
++
++//Lock to make sure only one car is turning left
++struct lock *intersection;
++
++//Locks used to optimize left turns
++struct lock *A;
++struct lock *B;
++struct lock *C;
++
++//Priority locks
++struct lock *priorityA;
++struct lock *priorityB;
++struct lock *priorityC;
++
++//Finished
++struct lock *done;
++volatile int finished;
++
++
+ 
+ /*
+  * turn_left()
+@@ -35,11 +58,136 @@ static
+ void
+ turn_left(unsigned long vehiclenumber)
+ {
++	//Turn left from A, B, or C
++	int left = get_vehicle_route(vehiclenumber);
++	switch(left){
++		//A
++		case 0:
++			//Try to get the lock
++			lock_acquire(A);
++			// Control priority
++			// If I am a truck and cars have approached --> let go of all locks, try to re-acquire all locks --> repeat until no cars have approached
++			while(!get_vehicle_type(vehiclenumber) && priorityA->carCount!=0){
++				lock_release(A);
++				lock_release(intersection);
++				lock_acquire(intersection);
++				lock_acquire(A);
++			}
++			break;
++		//B
++		case 1:
++			//Try to get the lock
++			lock_acquire(B);
++			// Control priority
++			// If I am a truck and cars have approached --> let go of all locks, try to re-acquire all locks --> repeat until no cars have approached
++			while(!get_vehicle_type(vehiclenumber) && priorityB->carCount!=0){
++				lock_release(B);
++				lock_release(intersection);
++				lock_acquire(intersection);
++				lock_acquire(B);
++			}			
++			break;
++		//C
++		default:
++			//Try to get the lock
++			lock_acquire(C);
++			// Control priority
++			// If I am a truck and cars have approached --> let go of all locks, try to re-acquire all locks --> repeat until no cars have approached
++			while(!get_vehicle_type(vehiclenumber) && priorityC->carCount!=0){
++				lock_release(C);
++				lock_release(intersection);
++				lock_acquire(intersection);
++				lock_acquire(C);
++			}
++			break;
++
++	}
++
++	//Go into the portion of the intersection the lock just attained
++	enter(vehiclenumber, left);
++
+ 	/*
+-	 * Avoid unused variable warnings.
+-	 */
++	
++	Get the next lock needed for transfer() based on the lock we hold for enter()
++
++	Note we are okay with sleeping while holding the lock needed for enter() because
++	that "car" or thread is still "physically" in that part of the intersection.
++
++	*/
++	switch((left+1)%3){
++		//A
++		case 0: 
++			lock_acquire(A);
++			break;
++		//B
++		case 1:
++			lock_acquire(B);
++			break;
++		//C
++		default:
++			lock_acquire(C);
++			break;
+ 
+-	(void) vehiclenumber;
++	}
++
++	//Enter into the second portion of the intersection that we just acquired the lock for
++	transfer(vehiclenumber, left, (left+1)%3);
++	
++	//We now no longer need the lock acquired for enter() so we release them here
++	switch(left){
++		//A
++		case 0: 
++			//Update priority counter if veichle is a car since its not longer in the approach() state
++			if(get_vehicle_type(vehiclenumber)){
++				lock_acquire(priorityA);
++				priorityA->carCount--;
++				lock_release(priorityA);
++			}
++			//Release lock A
++			lock_release(A);
++			break;
++		//B
++		case 1:
++			//Update priority counter if veichle is a car since its not longer in the approach() state
++			if(get_vehicle_type(vehiclenumber)){
++				lock_acquire(priorityB);
++				priorityB->carCount--;
++				lock_release(priorityB);
++			}
++			//Release lock B
++			lock_release(B);
++			break;
++		//C
++		default:
++			//Update priority counter if veichle is a car since its not longer in the approach() state
++			if(get_vehicle_type(vehiclenumber)){
++				lock_acquire(priorityC);
++				priorityC->carCount--;
++				lock_release(priorityC);
++			}
++			//Release lock C
++			lock_release(C);
++			break;
++	}
++	//Now that we have the second lock and let go of the first we can leave the intersection safely
++	leave(vehiclenumber, (left+1)%3);
++
++	//Release the second lock we acquired after we are fully exited (No chance for crash)
++	switch((left+1)%3){
++		//A
++		case 0: 
++			lock_release(A);
++			break;
++		//B
++		case 1:
++			lock_release(B);
++			break;
++		//C
++		default:
++			lock_release(C);
++			break;
++
++	}
+ }
+ 
+ 
+@@ -61,12 +209,85 @@ turn_left(unsigned long vehiclenumber)
+ static
+ void
+ turn_right(unsigned long vehiclenumber)
+-{
+-	/*
+-	 * Avoid unused variable warnings.
+-	 */
++{ 
++	//Turn right from route A, B, or C
++	int intersection = get_vehicle_route(vehiclenumber);
++	switch(intersection){
++		//A
++		case 0:	
++			//Try to get lock A
++			lock_acquire(A);
++			// Control priority
++			// If I am a truck and cars have approached --> let go of all locks, try to re-acquire all locks --> repeat until no cars have approached
++			while(!get_vehicle_type(vehiclenumber) && priorityA->carCount!=0){
++				lock_release(A);
++				lock_acquire(A);
++			}
++			break;
++		//B
++		case 1:
++			//Try to get lock B
++			lock_acquire(B);
++			// Control priority
++			// If I am a truck and cars have approached --> let go of all locks, try to re-acquire all locks --> repeat until no cars have approached
++			while(!get_vehicle_type(vehiclenumber) && priorityB->carCount!=0){
++				lock_release(B);
++				lock_acquire(B);
++			}
++			break;
++		//C
++		default:
++			//Try to get lock C
++			lock_acquire(C);
++			// Control priority
++			// If I am a truck and cars have approached --> let go of all locks, try to re-acquire all locks --> repeat until no cars have approached
++			while(!get_vehicle_type(vehiclenumber) && priorityC->carCount!=0){
++				lock_release(C);
++				lock_acquire(C);
++			}
++			break;
++
++	}
++	//Go into the intersection we just locked
++	enter(vehiclenumber,get_vehicle_route(vehiclenumber));
+ 
+-	(void) vehiclenumber;
++	//Leave the intersection we just locked
++	leave(vehiclenumber, get_vehicle_route(vehiclenumber));
++
++	//Unlock now that we are fully exited (No crashes)
++	switch(intersection){
++		//A
++		case 0: 
++			//Update priority counter if veichle is a car since its not longer in the approach() state
++			if(get_vehicle_type(vehiclenumber)){
++				lock_acquire(priorityA);
++				priorityA->carCount--;
++				lock_release(priorityA);
++			}
++			lock_release(A);
++			break;
++		//B
++		case 1:
++			//Update priority counter if veichle is a car since its not longer in the approach() state
++			if(get_vehicle_type(vehiclenumber)){
++				lock_acquire(priorityB);
++				priorityB->carCount--;
++				lock_release(priorityB);
++			}
++			lock_release(B);
++			break;
++		//C
++		default:
++			//Update priority counter if veichle is a car since its not longer in the approach() state
++			if(get_vehicle_type(vehiclenumber)){
++				lock_acquire(priorityC);
++				priorityC->carCount--;
++				lock_release(priorityC);
++			}
++			lock_release(C);
++			break;
++
++	}
+ }
+ 
+ 
+@@ -94,17 +315,63 @@ turn_right(unsigned long vehiclenumber)
+ 
+ static
+ void
+-vehicle_thread(void * unusedpointer,
++vehicle_thread(void *unusedpointer,
+ 		unsigned long vehiclenumber)
+ {
+ 	/*
+ 	 * Avoid unused variable and function warnings.
+ 	 */
+ 	(void) unusedpointer;
+-	(void) vehiclenumber;
+ 
+-	(void) turn_left;
+-	(void) turn_right;
++	//Is the vehicle coming from route A, B, or C?
++	switch(get_vehicle_route(vehiclenumber)){
++		case 0: 
++			//Update priority counter if veichle is a car since its now in the approach() state
++			if(get_vehicle_type(vehiclenumber)){
++				lock_acquire(priorityA);
++				priorityA->carCount++;
++				lock_release(priorityA);
++				break;
++			}
++		case 1: 
++			//Update priority counter if veichle is a car since its now in the approach() state
++			if(get_vehicle_type(vehiclenumber)){
++				lock_acquire(priorityB);
++				priorityB->carCount++;
++				lock_release(priorityB);
++				break;
++			}
++		case 2: 			
++			//Update priority counter if veichle is a car since its now in the approach() state
++			if(get_vehicle_type(vehiclenumber)){
++				lock_acquire(priorityC);
++				priorityC->carCount++;
++				lock_release(priorityC);
++				break;
++			}
++
++	}
++	
++	//Vehicle approaches
++	approach(vehiclenumber);
++
++	//Turn left
++	if(get_vehicle_turn_direction(vehiclenumber)){
++		//Only allow one car to go left at a time. Reduces gridlock.
++	 	 lock_acquire(intersection);
++		 turn_left(vehiclenumber);
++		 lock_release(intersection);
++	}
++
++	//Turn right
++	else if(!get_vehicle_turn_direction(vehiclenumber)){
++		turn_right(vehiclenumber);
++	}
++ 
++	//Sync the finish() by waiting for all vehicles to exit
++	lock_acquire(done);
++	finished++;
++	lock_release(done);
+ 
+ 	/* Note: Throughout this project you will use the get_vehicle_* functions
+ 	 * to get various information about the vehicle. For example:
+@@ -144,6 +411,23 @@ stoplight_driver(int vehicle_count)
+ {
+ 	/* Your initialization code should go here. */
+ 
++	//Left turns
++	intersection = lock_create("INTERSECTION LOCK");
++
++	//Right turns
++	A = lock_create("ROUTE A LOCK");
++	B = lock_create("ROUTE B LOCK");
++	C = lock_create("ROUTE C LOCK");
++
++	//Car count per route (used to update carCount)
++	priorityA = lock_create("PRIORITTY LOCK ROUTE A");
++	priorityB = lock_create("PRIORITTY LOCK ROUTE B");
++	priorityC = lock_create("PRIORITTY LOCK ROUTE C");
++
++	//Wait for all cars to exit intersection
++	finished = 0;
++	done = lock_create("THREAD CROSSED INTERESCTION");
++
+ 	/* This loop creates the vehicle threads. You should not change the code
+ 	 * inside the loop -- all of your vehicle logic should be inside the vehicle
+ 	 * threads themselves. */
+@@ -162,7 +446,9 @@ stoplight_driver(int vehicle_count)
+ 				strerror(error));
+ 		}
+ 	}
+-
++	while(finished != vehicle_count) {
++		thread_yield();
++	}
+ 	/* This function indicates the end of the stoplight problem.
+ 	 * This kind of thing is important in a synchronization problem, as
+ 	 * without a specific indicator that the problem has been concluded,
+@@ -177,6 +463,22 @@ stoplight_driver(int vehicle_count)
+ 	 */
+ 	finish();
+ 
++	//Free locks for routes
++	lock_destroy(A);
++	lock_destroy(B);
++	lock_destroy(C);
++
++	//Free the locks for the priority of a route
++	lock_destroy(priorityA);
++	lock_destroy(priorityB);
++	lock_destroy(priorityC);
++
++	//Free the lock used for turning left
++	lock_destroy(intersection);
++
++	//Free the lock used to sync the finish() call
++	lock_destroy(done);
++
+ 	/* You will probably want to put your cleanup code here, but you might not
+ 	 * want to actually write it until you've implemented the synchronization of
+ 	 * the finish() call. Consider why you would want to wait to run the cleanup
+diff --git a/kern/asst1/stoplight_framework.c b/kern/asst1/stoplight_framework.c
+index 54f320a..fc99412 100644
+--- a/kern/asst1/stoplight_framework.c
++++ b/kern/asst1/stoplight_framework.c
+@@ -31,9 +31,9 @@
+  * get_vehicle_turn_direction() for each vehicle.
+  */
+ struct vehicle {
+-	int route;
+-	int type;
+-	int turn_direction;
++	int route;//0 == a & 1 == b & 2 == c
++	int type;//0 == truck & 1 == car
++	int turn_direction;//0 == right & 1 == left
+ };
+ 
+ /**
+@@ -224,7 +224,7 @@ stoplight_random(int nargs, char **args) {
+ 	(void)nargs;
+ 	(void)args;
+ 
+-	setup(100);
++	setup(255);
+ 
+ 	/* After setup(), randomize all info. Use modulo to get values
+ 	 * in-range.
+@@ -233,13 +233,13 @@ stoplight_random(int nargs, char **args) {
+ 	 * that's OK, as the main point of this test is to have cars
+ 	 * in *all possible combinations*, which it does. */
+ 	int i;
+-	for(i = 0; i < 100; ++i) {
+-		all_vehicles[i].route = random() % 3;
+-		all_vehicles[i].turn_direction = random() % 2;
++	for(i = 0; i < 255; ++i) {
++		all_vehicles[i].route = i%3; //random() % 2;
++		all_vehicles[i].turn_direction = i%2; //random() % 2;
+ 		all_vehicles[i].type = random() % 2;
+ 	}
+ 
+-	stoplight_driver(100);
++	stoplight_driver(255);
+ 	
+ 	return 0;
+ }
+@@ -270,7 +270,7 @@ stoplight_prio(int nargs, char **args) {
+ 	int i;
+ 	for(i = 0; i < 30; ++i) {
+ 		/* Important: All vehicles on same route, so we can test priority. */
+-		all_vehicles[i].route = ROUTE_A;
++		all_vehicles[i].route = i%3; //ROUTE_A;
+ 		all_vehicles[i].turn_direction = TURN_RIGHT;
+ 
+ 		/* First 15 low priority, next 15 high priority. */
+@@ -343,4 +343,4 @@ stoplight_custom(int nargs, char **args) {
+ 	}
+ 
+ 	return 0;
+-}
+\ No newline at end of file
++}
+diff --git a/kern/include/synch.h b/kern/include/synch.h
+index 64b4469..9772825 100644
+--- a/kern/include/synch.h
++++ b/kern/include/synch.h
+@@ -49,9 +49,10 @@ void              sem_destroy(struct semaphore *);
+  */
+ 
+ struct lock {
+-	char *name;
+-	// add what you need here
+-	// (don't forget to mark things volatile as needed)
++	char *name; //name of the lock
++	volatile int held; //0 open and 1 held;
++	void* holder; // holds the address to a struct that holds the lock
++	volatile int carCount;// keep track of priority
+ };
+ 
+ 
+diff --git a/kern/thread/synch.c b/kern/thread/synch.c
+index 4c33942..2283f9c 100644
+--- a/kern/thread/synch.c
++++ b/kern/thread/synch.c
+@@ -101,20 +101,24 @@ V(struct semaphore *sem)
+ struct lock *
+ lock_create(const char *name)
+ {
++	//Declare lock
+ 	struct lock *lock;
+ 
++	//Dynamic mem alloc
+ 	lock = kmalloc(sizeof(struct lock));
+ 	if (lock == NULL) {
+ 		return NULL;
+ 	}
+ 
++	//Update and init fields
+ 	lock->name = kstrdup(name);
+ 	if (lock->name == NULL) {
+ 		kfree(lock);
+ 		return NULL;
+ 	}
+-	
+-	// add stuff here as needed
++	lock->carCount = 0;
++	lock->held = 0;
++	lock->holder = NULL;
+ 	
+ 	return lock;
+ }
+@@ -122,38 +126,70 @@ lock_create(const char *name)
+ void
+ lock_destroy(struct lock *lock)
+ {
++	//Lock exists
+ 	assert(lock != NULL);
+-
+-	// add stuff here as needed
+-	
++	//Turn off interrupts
++	int spl = splhigh();
++	assert(thread_hassleepers(lock) == 0);
++	//Turn on interupts
++	splx(spl);
++	lock->holder = NULL;
+ 	kfree(lock->name);
+ 	kfree(lock);
+ }
+-
++//NOTE: when sleeping we store the address of the lock under the current threads sleeping
++//address field and then store the entire currrent thread in the sleep queue.
++//When time to wake we look for the first thread with a the same sleeping address i.e.
++//it will wake up the first thread thats sleeping at this address.
+ void
+ lock_acquire(struct lock *lock)
+ {
+-	// Write this
++	int spl;
++	//Make sure lock exists
++	assert(lock != NULL);
++	//Not in interrupt
++	assert(in_interrupt==0);
+ 
+-	(void)lock;  // suppress warning until code gets written
++	spl = splhigh();//Interupts off
++	while (lock->held==1) {
++		thread_sleep(lock); // must be the lock because 
++				//when we wake a thread we want one from this lock
++	}
++	assert(lock->held==0); //make sure its not held
++	lock->held++;
++	lock->holder = curthread; //hold the lock
++	splx(spl); //Interupts back on
+ }
+ 
+ void
+ lock_release(struct lock *lock)
+ {
+-	// Write this
+-
+-	(void)lock;  // suppress warning until code gets written
++	int spl;
++	assert(lock != NULL);
++	spl = splhigh(); // Turn off interupts
++	if(!lock_do_i_hold(lock)) {
++		splx(spl); // Turn on interrupts
++		return;
++	}
++	
++	//Release the lock
++	lock->held = 0;
++	lock->holder = NULL;
++	
++	//Make sure updates held
++	assert(lock->held == 0);
++	assert(lock->holder == NULL);
++	
++	thread_wakeup(lock);
++	splx(spl); // Turn on interrupts
+ }
+ 
+ int
+ lock_do_i_hold(struct lock *lock)
+ {
+-	// Write this
+-
+-	(void)lock;  // suppress warning until code gets written
+-
+-	return 1;    // dummy until code gets written
++	//Check to see if the current thread is the same as the one stored in lock
++	if(curthread == lock->holder) return 1;
++	return 0;   
+ }
+ 
+ ////////////////////////////////////////////////////////////

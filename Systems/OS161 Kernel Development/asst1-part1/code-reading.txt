@@ -1,0 +1,26 @@
+Thread Questions:
+
+1) Thread_exit() cleans up the part of the thread we don't need to run right away such as VM and CWD and leaves the rest until exorcise() is called to fully destroy the thread. Thread_sleep() puts a thread to sleep by calling mi_switch(S_SLEEP) while making sure interups are disabled and the thread is not currently in an interupt handler
+
+2) mi_switch() is responsibile for handling context switches. Similarly exit, sleep, and yield handle the cases for when a context switch may occur and then call mi_switch() withe designated state. Based on the states of the current threads the scheduler is called and then when things are in order the context switch occurs
+
+3)A thread can either be sleeping, ready to run, currently running, or be a zombie (waiting to be fully destroyed after exited)
+
+4)Turning off interupt means to allow the user program to ignore any interupts that may get the OS and hardware involved. This is accomplished through the use of splx or spl_high to set the IEc bit to a number between 1-15 inclusive. It is important to do this because if not you can have issues where threads sleep forever.
+
+5)When a thread wakes up another thread the function thread_wakeup(address to thread) is called. It ensures the thread is not null and is apart of the sleeping threads array. Then it is set to runable by make_runnable(). Make_runnable() is used to add a thread to the end of the running queue maintained by the scheduler.
+
+Scheduler Questions:
+
+6)The scheduler() function is responsible for choosing the thread that comes next. In the standard implementation there is just a single queue being served in a round robbin fashion. It returns the next thread.
+
+7)As mentioned above it uses round robin with a basic queue.
+
+8)The hardware timer given by hardclock is used to indicate allocate time slices have ended. When the timer interrupt occurs the thread_yield() function is used.
+
+Synchronization Questions:
+
+9) Thread sleep is used inside V(), a function which implements a variation of semp_wait(). Similarly Thread wakeup is used inside P(), a function which implements a variation of sem_post(). The purpose of the arg passed into sleep and wakeup is to be a pointer to the sem a sleeping or waking thread is associated with
+
+10) Because we want to only check if you have the lock, not who else has the lock. Much cheaper operation, and serves the purpose intended. We can only release a lock we own.
+

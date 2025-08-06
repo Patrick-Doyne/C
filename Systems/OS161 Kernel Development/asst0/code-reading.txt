@@ -1,0 +1,32 @@
+SOURCE PATH: os161/kern/arch/mips/include/machine
+1) Register s8 is used as the frame pointer in os161, I know this from opening the asmdefs header file.
+2) The only bus supported is the LAMEbus, this was located in the same directory as above but was found in the bus.h header file. Found at the top comment of the file. 
+3) spl0 enables interupts while splhigh disables them. The term spl stands for "SET PRIORITY LEVEL" and is used to determine weather or not an interupt is more important than another
+4) Machine dependencies are based upon a systems architecture. More specifically: compatibility of data types, such as 64 bit longs in this system, registers, and type of endian.
+This seperation is needed to increase a systems flexibility and portability.
+
+SOURCE PATH: os161/kern/arch/mips/include/machine
+5) splx takes in a desired prioirty level and returns the previous priority level before the function splx was called. This is found in the comments of spl.c located in the above directory
+6) There is only one on-cpu interrupt line. Additionally, the OS techinally uses a total of 5 bits to dynamically mask interupts. The interupt enable current bit, bit 0 of the coprocessor or the "status" bit. Additionally 4 bits are used for the on chip masking of the spl value since the max spl is set to 15 and min is 0.
+7) Although we have bitmasking for priority levels with spl we don't actually use it for simplicity. We only care about the current status dictated by the IEc bit. In that sense there is no 
+priority level being used. There is either an interrupt or there isn't one.
+
+SOURCE PATH: os161/kern
+8) OS161 PIDs are 32 bits meaning there can be up to 2^32 PIDs and the number of processes that can be supported varies depednng on the processes being ran and how much memory each will take. 
+9) The system call number for a reboot is defined as 9 inside of the callno.h file. Additionally, this system call is not accessible to the user due to it being stored in the kern directory under 
+~os161/kern/include/
+
+SOURCE PATH: os161/kern/lib
+10) The purpose of functions such as copyin and copyout is to safegaurd against "bad" addresses from user-level code (processes) and prevent the kernel from failing. You might want to use these when user-level code uses a system call. Additionally, this can be used when a user-level process tries to get access to unauthorized areas of code/data/memory.
+
+
+SOURCE PATH: os161/kern/thread
+11) thread_destroy() completely destory the threat by freeing all of its memory including the stack it is operating on, and this is not something a thread should call on itself. Additionaly,
+thread_exit() is able to be called by itself and only cleans up the parts of the thread structure that we dont need to run right away. The rest of cleaning up has to wait for exorcise to
+call thread_destroy().
+12) There are 4 total states: run, ready, sleep, and zombie. Zombies threads are cleaned up when a process has been exited but not fully deleted yet. The excorcise function is called and once 
+confirming that the current thread is not the one attempting to be destroyed a call is made to thread_destroy(). I found this information inside of the thread.c file at the listed SOURCE PATH.
+13) thread_yield() is a function that causes a thread to yield to the cpu. You might want to do this when a process wants to access I/O, that way you can optimize cpu usage.
+
+
+

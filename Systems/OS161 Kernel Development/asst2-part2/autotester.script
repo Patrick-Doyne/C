@@ -1,0 +1,31 @@
+Script started on 2025-05-05 22:58:34-04:00
+bash-4.4$ exit./pa2-test.sh 
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/kern/kernel
+[36mGEN     (B[m/home/pdoyne/CS571/os161-asst2/os161/kern/compile/vers.c
+*** This is ASST2 build #990 ***
+[32mCC      (B[m/home/pdoyne/CS571/os161-asst2/os161/kern/compile/vers.c
+[35mLINK    (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/kern/kernel
+[34mINSTALL (B[m/home/pdoyne/CS571/os161-asst2/os161/root/kernel
+Running test at-getpid-simple     ... [32mSUCCESS(B[m
+Running test at-fork-pidagree     ... [32mSUCCESS(B[m
+Running test at-fork-limit        ... [32mSUCCESS(B[m
+Running test at-getppid-stable    ... [32mSUCCESS(B[m
+Running test at-waitpid-waits     ... [32mSUCCESS(B[m
+Running test at-waitpid-exitcodes ... [32mSUCCESS(B[m
+Running test at-waitpid-nochild   ... [32mSUCCESS(B[m
+Running test at-waitpid-efault    ... [32mSUCCESS(B[m
+Running test at-execv-simple      ... [32mSUCCESS(B[m
+Running test at-execv-add         ... [31mFAILED(B[m
+in root/pa2-test-output/at-execv-add-output.txt:
+[1m[31merror: [0m[1mMissing expected line: 
+      'SUM: 85'
+[0m[1m[0m
+[1mNote: Suppressed 3 additional errors. See root/pa2-test-output/at-execv-add-errors.txt for all errors.
+[0m
+Running test at-execv-efault-arg  ... [32mSUCCESS(B[m
+Running test at-exit-exits        ... [32mSUCCESS(B[m
+Running test at-parameter-passing ... [32mSUCCESS(B[m
+bash-4.4$ exit
+exit
+
+Script done on 2025-05-05 22:59:04-04:00

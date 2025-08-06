@@ -1,0 +1,42 @@
+CODING QUESTIONS:
+
+1) An ELF magic number is placed as the first 4 bytes of a file and used to interpret it as an ELF executable '0x7', 'E', 'L', 'F'
+
+Also provides other information about the files formatting.
+
+2) UIO_USERISPACE is the area in memory where the instructions for a process lives(executable) and UIO_USERSPACE is the part of memory where data 
+lives. Both for a respective user process. UIO_SYSSPACE is used to access memory from within the kernel space.
+
+3) uio can be alloc on the stack in load_segment() due to it only holding information REGARDING the data being transferred and not the actual data 
+that IS BEING TRANSFFERED. In fact the vaddr is where the information is actually read into. (i.e. a virtual address in the  user address space)
+
+4) It is important to close the executable because the kernel no longer needs it and if a later process needs to use this executable then we want to 
+be able to. Also since runprogram never returns due to md_usermode we could aslo have a memory leak. Further more, its of no use for the user so why 
+wouldn't we.
+
+5) mips_usermode calls asm_usermode which then forces the switch and is only to be used in mips port(i.e. machine dependent for and meant to be used for MIPS).
+
+6) copyin/out is defined in os161/kern/lib/copyinout.c and memmove is defined in os161/lib/libc/memmove.c
+
+Its not as simple to implement copy in and out becuase they move data between the kernel and a user process while memmove being a standard C function only 
+allows you to move memory within the same address space of the process it is called on. i.e there is a much larger secuirty risk to deal with.
+
+7) The purpose of the userptr_t is to differentiate between pointers to the kernel space and user space. Points to a struct holding a single character 
+while pointers to kernel space are of type void.
+
+8) The value of the system call exception code is 8 and denoted by EX_SYS
+
+9) By setting spl manually we avoid any extra over head that is not needed at this time since the only functions of spl_high() are to set curspl to high 
+and then return the old value. As you can see in the line above we already save the previous state manually as well. i.e it is more effiicent at this point to
+set the value manually and the trap needs it to be set right away.
+
+10) An instruction in mips is 32 bits or 4 bytes as pointed out in syscall.c when updating the PC.
+
+11) We will HAVE to change the implementation of kill_curthread() becasue for this project we must implement user progs and right now the function
+does not know how to handle these types of processes. 
+
+12) The addiitonal args would have to be fetched from the user level stack as stated in syscall.c
+
+13 & 14) SYSCALL macro/instruction is responsible for starting a system call and takes in 2 arguements. First the name of the system call, and second the number associated with it.
+
+

@@ -1,0 +1,75 @@
+1. High-level overview of the solution Your answer to this question:
+
+I implemented a lock that has two fields. The first "held" , is exactly what it sounds like, it is used to show if the lock is held or not. The second arguement 
+isn't exactly needed, meaning I could have just used a global variable shared between threads, however it provides less clutter this way. This lock was the used
+inside of stoplight for the route, a left turn, and priority for each route. Additioally, a lock was used to sync the proverbial finish line. Using locks in each 
+of these areas combined with switch statment and a couple short loops and we have our solution! After we hit the finish line we make sure to destory the locks and 
+free up any allocated mmory. No leaks!
+
+
+
+2. How many locks you used in your program and for what purpose(s) Your answer to this question
+
+I used a total of 8 locks:
+
+    (a) Route A: only one vehicle can enter from a route per time and is therefor a critical section.
+    (b) Route B: only one vehicle can enter from a route per time and is therefor a critical section.
+    (c) Route C: only one vehicle can enter from a route per time and is therefor a critical section.
+    
+    (d) Left Turn: similarly, my solution only allows for one peron to be taking a left turn at a time. I understand you can have upto two people taking a left at the 
+    same time. For example if A turns left and transfers that then allows for a vehicle from route C to go left. However, I decided against this implementation. Since
+    the project is simulating a real intersection its not realistic to ride someones bumper like that. More over, it would add extra overhead, despite being able to leverage 
+    the extra vehicle turning it exposes the program to more concurrency risk and therefor requires more maticulous and flexible code. 
+    
+    (e) priorityA: This lock is used to access the field native to my lock implementation "carCount", as mentioned earlier I could have used a global instead but I would still
+    need to use a lock to update the data so I combined the two. carCount is used to track the current priority in this route. 
+    (f) priorityB: This lock is used to access the field native to my lock implementation "carCount", as mentioned earlier I could have used a global instead but I would still
+    need to use a lock to update the data so I combined the two. carCount is used to track the current priority in this route. 
+    (g) priorityC: This lock is used to access the field native to my lock implementation "carCount", as mentioned earlier I could have used a global instead but I would still
+    need to use a lock to update the data so I combined the two. carCount is used to track the current priority in this route.     
+    
+    (e) Done: used to sync the threads finsihing before calling finish()
+
+
+3. How you achieved the objective of giving high-priority to cars (compared to trucks); explain what type of data structures and synchronization primitives you used for that purpose
+Your answer to this question
+
+The only data structure I used was my implementation of locks. I was actually unsure of what we could use so I tried to stick to just locks and global counters that were both init before
+thread_fork was looped. I essentially kept track of the approaching cars and incremented then after they enter I will decrement. Inc/dec carCount in the lock responsible for the priority
+of that route. See question 2 e-g for the exact locks used. Additionally any time a thread approaches it will always try to acquire the lock for its route (problem 2 a-c), then after it gets
+its lock we loop and check to see if the thread is a truck and if the respective route priority lock's carCount is not equal to 0. If these are true statements then we release and reaquire the lock
+until the condition is met. This effectively checks for the opportunities for trucks to run ASAP but still allows for them to wait for cars that have also approached.
+
+
+4. Specific rules you implemented to admit, suspend, and wake up a vehicle thread, approaching the intersection from a specific lane: you may want to list separate cases you considered.
+Your answer to this question
+
+--If the vehicle is a car then increment its respective priority lock's carCount and approach
+
+--Else the vehicle is a truck, approach
+
+--If the car wants to turn left grab the left turn lock and proceed to grabbing the respective lock needed to enter your route 
+
+--If you want to turn right then just grab the routes respective lock 
+
+--For a car turning left or right we grab our entry lock, we check to make sure if we are a truck then carCount must be 0 for our route,
+and if not we will release the left turn lock (not needed for right turns obviously) followed by the respective routes entry lock. Then reacquire
+the left turn if needed and is followed by reacquiring the respective entry lock
+
+--We print our entry message
+
+--If we are turning right we the print leave message and release the lock
+
+--If we are turning left then we try to acquire our respective transfer lock then print the transfer message and release the entry lock
+
+--Then if turning left at this point we print leave() and release the transfer lock.
+
+--Now we are back in vehicle_threads and each thread tries to grab the done lock then increment the finished variable. Once it is equal to the vehicle counter
+that was given in stoplight finish() will print and our program will end
+
+--THE END :)
+
+***NOTE: 
+    -I approach() after updating priority with a very brief lock hold to combat an edge case where the first vehicle is a truck & breaks priority.
+    -I can use globals instead of fields in the lock if that is against the rules. I didn't see anything aginst it and also asked on piazza.
+

@@ -1,0 +1,92 @@
+Design Document For Project Assignment #2
+
+High-Level View:
+    -Adjust structs and make structs/globals I will need
+    -Start simple with getpid/getppid/process storage and managing
+    -Get fork to work
+    -Get exec to work
+    -Implement error codes for everything so far and begin DEBUGGING
+    -Get waitpid and exit to function 
+    -Add their error codes and do more DEBUGGING
+    *EDIT* 
+    -Make sure command line tests work as well
+
+Detailed-Level View:
+    We will need to first impleement a proper way to store and track the process ids, processes, exit codes, and other relevant information. Then We
+    need a series of structs to tell us things about these threads in relation to one another, specifically child and parent threads. Next lets update
+    our header files for syscall and thread to refelct the sys calls we need to add and the fields within the thread struct we need to add as well as
+    any global tables.
+
+    Well that gets the ball rolling in the right direction but we have nothing to show us if things are working yet. We should start with the most basic 
+    portion we can, getpid() and getppid(), former and then laater of course. So far it is clear every thread should know who their parent is and we will
+    also need to store our exit status for later as well. 
+
+    Now that we have those put together and the syscall and thread .h/.c files are updated lets figure out how to test these calls. Looking at the Project
+    description we have a couple ways to try, however the simplest seemed to be an automated tester, so we use that first. After teetering and fixing sloppy 
+    syntax we have a working syscall or two, granted they are... well... simple. This was also a good time to focus on errors for these two syscalls such
+    as having too many processes or if the parent has already exited or if we are out of memory.
+
+    Next we start with forking. The first real puzzle of the assignment. I originally was trying to use memcopy to get a copy of the tf but after a few pain
+    staking hours of losing my mind I realized pointer assignment was all it needed. I then took a look at the addrspace.c file and got a feel for some of the 
+    copy functions at our disposal and took the recommendation to use as_copy for the addrspace. Then from there it was really not too bad. 
+    I created a new thread pointer that brings back the newly created thread from thread_fork and allows me to return the childs PID to the parent.
+    Within thread_fork() i set up the new threads fields and update the appropriate tables one for the process, one for pid availability, one for exiting,
+    and one for using wait to pass message (More on that later...). We then switch into md_forkenetry update registers and PC, then activate the address space
+    and send back a copy of the trap frame.
+
+    The heart of this project was a real pain in my you know what, none other than execv :). Getting the args copied into kernel heap was simple enough but then
+    I ran into a major road block trying to make a contigous bloack, char ** dont like lots of null bytes, well atleast if you put them in bottom to top, a lesson
+    I realize later in this implementation *sigh*. Anyhow, I spent 6 hours messing with void pointers and learned a lot about how they can be useful, but
+    you must be painstakingly careful. I was able to get all the args in a contigous block with proper padding and then stored the offset for char** at char*.
+    This then aloud me to combine that offset with the decremented stack pointer and after a few more hours of messing with void pointers I was able to load
+    at-execv-simple and have it function.
+
+    The dynamic duo was next up, waitpid and exit. This was one of those things that hurt even more because I thought it would be super simple, which it was
+    in heinsight but I over looked a crucial part. After playing with 1-4 locks at a time it hit me. It wasn't a locking issue, I was trapping myself anytime 
+    a thread exited before the parent had a chance to call wiatpid! After that everything worked fine, and was honestly pretty satisfying to use something
+    I built from a different project for this one :)
+
+    My logic was 
+        WAITPID: Check if child exited if so then destroy it and if not wait for it to exit then destroy it both of which return the PID of the child
+        EXIT   : If the parent is waiting we let them know we are about to exit via the exit table and wait table other wise we just update the exit table
+        and exit normally
+
+    I also used a lock to make sure table accesses didn't have race conditions on read and writes.
+
+    I began to then run through all the at-...-... tests and added error codes/small changes here and there until I got all of them working except 2.
+    This is where I became ever grateful for your extentsion on this project becasue just when I though I was done I realized at-passing-parameters
+    will only pass after over hauling menu.c and runprogram.c, however, this wasn't too bad and gave me a chance to work at the void pointer idea from a 
+    slightly simpler angle since we didn't also copy it into kernel memory first seeing as it stems from kernel. I put the args in backwards this time
+    and was able to seemlessly padd them. I kept banging my head in the wall though because on the copyout call to shove the contigous block into the 
+    new stack I messed up the sizing. 2 HOURS OF DEBUGGING and got it to work. This got at-passing-parameters to work but one still gave me trouble
+    and for the life of me I don't know why it wont work: at-execv-add;
+
+    At this point I know it is not perfect by any means but I am proud and happy to say I made good progress on this, especially considering I solo'd 
+    all the projects. Thank you all for such an amazing opportunity !!! :)
+
+The Disucssion of Good and Bad:
+    Pros: 
+        -Everything functions
+        -Processes are tracked and disposed of properly
+        -Error code are implemented and work
+        -Systemm feels smooth on most tests
+        -Command line p tests work
+        -All but one at-...-.. test work
+        -tt1-tt3  all work
+        -There is mode safety when dealing with execv and forking
+        -Well commented
+    Cons:
+        -Sometimes fork-limit, getppid-stable/agree, seem to exit their tests early but with no error
+        I am not sure if this is a timer interupt set in the tester or if my code is too bulky
+        -Similarly with at-execv-add the output up to it exiting is correct but the timer shuts it off between
+        args 4-6 depedning on the run.
+        -Likely has some concurrency bugs surrounding different threads calling waitpid on their kids as I did not test that
+
+
+Alternatives That Were Discarded:
+    I wouldn't say i fully discarded any ideas but I reworked everything as described above several times. A couple ideas that I did discarded
+    included the use of more than one lock in wait/exit and the use of char ** in exec/runprogram. The former seemed to slow things down as I restricted more 
+    and more access. The goal was to keep things secure with miniimal performance damage. For exec/runprogram the char** proved to be annoying and did not work
+    at every step so I decided to take a more technical route and used a void pointer that can serve as any type of data whenever and wherever I need it, so
+    long as I know where we currently are within its allocated area.
+

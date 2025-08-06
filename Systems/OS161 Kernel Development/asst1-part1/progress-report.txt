@@ -1,0 +1,23 @@
+ Patrick Doyne
+ G#:01355212
+
+ Progress Report:
+
+ I began by looking at the C source files given within os161/kern/threads. The first file I looked at to begin the first portion of the second part to 
+ this project was sync.c. Within I saw the templates for semaphore and condition variables as well as two functions similar to sem_wait/post, V and P 
+ respectively. I then went back to the textbook to look for mutex lock examples. The implementation is not far off from using a semaphore, we will still 
+ ensure that interrupts are disabled, but we can use the predefined library pthread to use the mutex lock and its initilializer, lock, and unlock functions. 
+ I still need to do a bit of digginf into how to connect the implementation to the kernel and have it function.
+
+The rest of the files within threads gave me a better understanding of how threads interacted with the scheduler given the current implimentation. 
+Similarly, I learned about the timer interrupt and how it is used in this system. Also, it is duely noted that the state of interrupts is to be consiitently 
+checked to ensure the are enabled or disabled at the appropriate times to avoid the system from getting wonky and or putting threads to sleep forever.
+
+ For the second portion of the second stage in this project I have read through the documentation and the files we are to edit. I began to get a grasp 
+ on the majority of the code and started to think of scheduling implementations that could work. The current implementation will certaintly not suffice, 
+ and we are limited to using only the mutex lock we defined in the previos portion. Coding has not started on this portion as I am still working on the 
+ proper implementation of mutex locks from the previous section. 
+
+ To cnclude, I have a good understanding of what needs to be implemented, and a good starting implentation for the type of lock required. Once I figured out 
+ how to implement the written code and debug it then I will be able to move on to the stoplight portion. Given the documeentation and the video material 
+ posted I am sure things will piece together nicely.

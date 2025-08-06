@@ -1,0 +1,2714 @@
+diff --git a/asst1-part1/code-reading.txt b/asst1-part1/code-reading.txt
+new file mode 100644
+index 0000000..10eae70
+--- /dev/null
++++ b/asst1-part1/code-reading.txt
+@@ -0,0 +1,26 @@
++Thread Questions:
++
++1) Thread_exit() cleans up the part of the thread we don't need to run right away such as VM and CWD and leaves the rest until exorcise() is called to fully destroy the thread. Thread_sleep() puts a thread to sleep by calling mi_switch(S_SLEEP) while making sure interups are disabled and the thread is not currently in an interupt handler
++
++2) mi_switch() is responsibile for handling context switches. Similarly exit, sleep, and yield handle the cases for when a context switch may occur and then call mi_switch() withe designated state. Based on the states of the current threads the scheduler is called and then when things are in order the context switch occurs
++
++3)A thread can either be sleeping, ready to run, currently running, or be a zombie (waiting to be fully destroyed after exited)
++
++4)Turning off interupt means to allow the user program to ignore any interupts that may get the OS and hardware involved. This is accomplished through the use of splx or spl_high to set the IEc bit to a number between 1-15 inclusive. It is important to do this because if not you can have issues where threads sleep forever.
++
++5)When a thread wakes up another thread the function thread_wakeup(address to thread) is called. It ensures the thread is not null and is apart of the sleeping threads array. Then it is set to runable by make_runnable(). Make_runnable() is used to add a thread to the end of the running queue maintained by the scheduler.
++
++Scheduler Questions:
++
++6)The scheduler() function is responsible for choosing the thread that comes next. In the standard implementation there is just a single queue being served in a round robbin fashion. It returns the next thread.
++
++7)As mentioned above it uses round robin with a basic queue.
++
++8)The hardware timer given by hardclock is used to indicate allocate time slices have ended. When the timer interrupt occurs the thread_yield() function is used.
++
++Synchronization Questions:
++
++9) Thread sleep is used inside V(), a function which implements a variation of semp_wait(). Similarly Thread wakeup is used inside P(), a function which implements a variation of sem_post(). The purpose of the arg passed into sleep and wakeup is to be a pointer to the sem a sleeping or waking thread is associated with
++
++10) Because we want to only check if you have the lock, not who else has the lock. Much cheaper operation, and serves the purpose intended. We can only release a lock we own.
++
+diff --git a/asst1-part1/progress-report.txt b/asst1-part1/progress-report.txt
+new file mode 100644
+index 0000000..805a236
+--- /dev/null
++++ b/asst1-part1/progress-report.txt
+@@ -0,0 +1,23 @@
++ Patrick Doyne
++ G#:01355212
++
++ Progress Report:
++
++ I began by looking at the C source files given within os161/kern/threads. The first file I looked at to begin the first portion of the second part to 
++ this project was sync.c. Within I saw the templates for semaphore and condition variables as well as two functions similar to sem_wait/post, V and P 
++ respectively. I then went back to the textbook to look for mutex lock examples. The implementation is not far off from using a semaphore, we will still 
++ ensure that interrupts are disabled, but we can use the predefined library pthread to use the mutex lock and its initilializer, lock, and unlock functions. 
++ I still need to do a bit of digginf into how to connect the implementation to the kernel and have it function.
++
++The rest of the files within threads gave me a better understanding of how threads interacted with the scheduler given the current implimentation. 
++Similarly, I learned about the timer interrupt and how it is used in this system. Also, it is duely noted that the state of interrupts is to be consiitently 
++checked to ensure the are enabled or disabled at the appropriate times to avoid the system from getting wonky and or putting threads to sleep forever.
++
++ For the second portion of the second stage in this project I have read through the documentation and the files we are to edit. I began to get a grasp 
++ on the majority of the code and started to think of scheduling implementations that could work. The current implementation will certaintly not suffice, 
++ and we are limited to using only the mutex lock we defined in the previos portion. Coding has not started on this portion as I am still working on the 
++ proper implementation of mutex locks from the previous section. 
++
++ To cnclude, I have a good understanding of what needs to be implemented, and a good starting implentation for the type of lock required. Once I figured out 
++ how to implement the written code and debug it then I will be able to move on to the stoplight portion. Given the documeentation and the video material 
++ posted I am sure things will piece together nicely.
+diff --git a/asst1-part2/asst1.diff b/asst1-part2/asst1.diff
+new file mode 100644
+index 0000000..530ef84
+--- /dev/null
++++ b/asst1-part2/asst1.diff
+@@ -0,0 +1,585 @@
++diff --git a/kern/asst1/stoplight.c b/kern/asst1/stoplight.c
++index aed0f40..2b7cf4f 100644
++--- a/kern/asst1/stoplight.c
+++++ b/kern/asst1/stoplight.c
++@@ -15,6 +15,29 @@
++ #include <synch.h> /* use the lock functions from this */
++ #include <machine/spl.h> /* splhigh(), splx() */
++ 
+++static
+++void
+++vehicle_thread(void *unusedpointer,
+++		unsigned long vehiclenumber);
+++
+++//Lock to make sure only one car is turning left
+++struct lock *intersection;
+++
+++//Locks used to optimize left turns
+++struct lock *A;
+++struct lock *B;
+++struct lock *C;
+++
+++//Priority locks
+++struct lock *priorityA;
+++struct lock *priorityB;
+++struct lock *priorityC;
+++
+++//Finished
+++struct lock *done;
+++volatile int finished;
+++
+++
++ 
++ /*
++  * turn_left()
++@@ -35,11 +58,136 @@ static
++ void
++ turn_left(unsigned long vehiclenumber)
++ {
+++	//Turn left from A, B, or C
+++	int left = get_vehicle_route(vehiclenumber);
+++	switch(left){
+++		//A
+++		case 0:
+++			//Try to get the lock
+++			lock_acquire(A);
+++			// Control priority
+++			// If I am a truck and cars have approached --> let go of all locks, try to re-acquire all locks --> repeat until no cars have approached
+++			while(!get_vehicle_type(vehiclenumber) && priorityA->carCount!=0){
+++				lock_release(A);
+++				lock_release(intersection);
+++				lock_acquire(intersection);
+++				lock_acquire(A);
+++			}
+++			break;
+++		//B
+++		case 1:
+++			//Try to get the lock
+++			lock_acquire(B);
+++			// Control priority
+++			// If I am a truck and cars have approached --> let go of all locks, try to re-acquire all locks --> repeat until no cars have approached
+++			while(!get_vehicle_type(vehiclenumber) && priorityB->carCount!=0){
+++				lock_release(B);
+++				lock_release(intersection);
+++				lock_acquire(intersection);
+++				lock_acquire(B);
+++			}			
+++			break;
+++		//C
+++		default:
+++			//Try to get the lock
+++			lock_acquire(C);
+++			// Control priority
+++			// If I am a truck and cars have approached --> let go of all locks, try to re-acquire all locks --> repeat until no cars have approached
+++			while(!get_vehicle_type(vehiclenumber) && priorityC->carCount!=0){
+++				lock_release(C);
+++				lock_release(intersection);
+++				lock_acquire(intersection);
+++				lock_acquire(C);
+++			}
+++			break;
+++
+++	}
+++
+++	//Go into the portion of the intersection the lock just attained
+++	enter(vehiclenumber, left);
+++
++ 	/*
++-	 * Avoid unused variable warnings.
++-	 */
+++	
+++	Get the next lock needed for transfer() based on the lock we hold for enter()
+++
+++	Note we are okay with sleeping while holding the lock needed for enter() because
+++	that "car" or thread is still "physically" in that part of the intersection.
+++
+++	*/
+++	switch((left+1)%3){
+++		//A
+++		case 0: 
+++			lock_acquire(A);
+++			break;
+++		//B
+++		case 1:
+++			lock_acquire(B);
+++			break;
+++		//C
+++		default:
+++			lock_acquire(C);
+++			break;
++ 
++-	(void) vehiclenumber;
+++	}
+++
+++	//Enter into the second portion of the intersection that we just acquired the lock for
+++	transfer(vehiclenumber, left, (left+1)%3);
+++	
+++	//We now no longer need the lock acquired for enter() so we release them here
+++	switch(left){
+++		//A
+++		case 0: 
+++			//Update priority counter if veichle is a car since its not longer in the approach() state
+++			if(get_vehicle_type(vehiclenumber)){
+++				lock_acquire(priorityA);
+++				priorityA->carCount--;
+++				lock_release(priorityA);
+++			}
+++			//Release lock A
+++			lock_release(A);
+++			break;
+++		//B
+++		case 1:
+++			//Update priority counter if veichle is a car since its not longer in the approach() state
+++			if(get_vehicle_type(vehiclenumber)){
+++				lock_acquire(priorityB);
+++				priorityB->carCount--;
+++				lock_release(priorityB);
+++			}
+++			//Release lock B
+++			lock_release(B);
+++			break;
+++		//C
+++		default:
+++			//Update priority counter if veichle is a car since its not longer in the approach() state
+++			if(get_vehicle_type(vehiclenumber)){
+++				lock_acquire(priorityC);
+++				priorityC->carCount--;
+++				lock_release(priorityC);
+++			}
+++			//Release lock C
+++			lock_release(C);
+++			break;
+++	}
+++	//Now that we have the second lock and let go of the first we can leave the intersection safely
+++	leave(vehiclenumber, (left+1)%3);
+++
+++	//Release the second lock we acquired after we are fully exited (No chance for crash)
+++	switch((left+1)%3){
+++		//A
+++		case 0: 
+++			lock_release(A);
+++			break;
+++		//B
+++		case 1:
+++			lock_release(B);
+++			break;
+++		//C
+++		default:
+++			lock_release(C);
+++			break;
+++
+++	}
++ }
++ 
++ 
++@@ -61,12 +209,85 @@ turn_left(unsigned long vehiclenumber)
++ static
++ void
++ turn_right(unsigned long vehiclenumber)
++-{
++-	/*
++-	 * Avoid unused variable warnings.
++-	 */
+++{ 
+++	//Turn right from route A, B, or C
+++	int intersection = get_vehicle_route(vehiclenumber);
+++	switch(intersection){
+++		//A
+++		case 0:	
+++			//Try to get lock A
+++			lock_acquire(A);
+++			// Control priority
+++			// If I am a truck and cars have approached --> let go of all locks, try to re-acquire all locks --> repeat until no cars have approached
+++			while(!get_vehicle_type(vehiclenumber) && priorityA->carCount!=0){
+++				lock_release(A);
+++				lock_acquire(A);
+++			}
+++			break;
+++		//B
+++		case 1:
+++			//Try to get lock B
+++			lock_acquire(B);
+++			// Control priority
+++			// If I am a truck and cars have approached --> let go of all locks, try to re-acquire all locks --> repeat until no cars have approached
+++			while(!get_vehicle_type(vehiclenumber) && priorityB->carCount!=0){
+++				lock_release(B);
+++				lock_acquire(B);
+++			}
+++			break;
+++		//C
+++		default:
+++			//Try to get lock C
+++			lock_acquire(C);
+++			// Control priority
+++			// If I am a truck and cars have approached --> let go of all locks, try to re-acquire all locks --> repeat until no cars have approached
+++			while(!get_vehicle_type(vehiclenumber) && priorityC->carCount!=0){
+++				lock_release(C);
+++				lock_acquire(C);
+++			}
+++			break;
+++
+++	}
+++	//Go into the intersection we just locked
+++	enter(vehiclenumber,get_vehicle_route(vehiclenumber));
++ 
++-	(void) vehiclenumber;
+++	//Leave the intersection we just locked
+++	leave(vehiclenumber, get_vehicle_route(vehiclenumber));
+++
+++	//Unlock now that we are fully exited (No crashes)
+++	switch(intersection){
+++		//A
+++		case 0: 
+++			//Update priority counter if veichle is a car since its not longer in the approach() state
+++			if(get_vehicle_type(vehiclenumber)){
+++				lock_acquire(priorityA);
+++				priorityA->carCount--;
+++				lock_release(priorityA);
+++			}
+++			lock_release(A);
+++			break;
+++		//B
+++		case 1:
+++			//Update priority counter if veichle is a car since its not longer in the approach() state
+++			if(get_vehicle_type(vehiclenumber)){
+++				lock_acquire(priorityB);
+++				priorityB->carCount--;
+++				lock_release(priorityB);
+++			}
+++			lock_release(B);
+++			break;
+++		//C
+++		default:
+++			//Update priority counter if veichle is a car since its not longer in the approach() state
+++			if(get_vehicle_type(vehiclenumber)){
+++				lock_acquire(priorityC);
+++				priorityC->carCount--;
+++				lock_release(priorityC);
+++			}
+++			lock_release(C);
+++			break;
+++
+++	}
++ }
++ 
++ 
++@@ -94,17 +315,63 @@ turn_right(unsigned long vehiclenumber)
++ 
++ static
++ void
++-vehicle_thread(void * unusedpointer,
+++vehicle_thread(void *unusedpointer,
++ 		unsigned long vehiclenumber)
++ {
++ 	/*
++ 	 * Avoid unused variable and function warnings.
++ 	 */
++ 	(void) unusedpointer;
++-	(void) vehiclenumber;
++ 
++-	(void) turn_left;
++-	(void) turn_right;
+++	//Is the vehicle coming from route A, B, or C?
+++	switch(get_vehicle_route(vehiclenumber)){
+++		case 0: 
+++			//Update priority counter if veichle is a car since its now in the approach() state
+++			if(get_vehicle_type(vehiclenumber)){
+++				lock_acquire(priorityA);
+++				priorityA->carCount++;
+++				lock_release(priorityA);
+++				break;
+++			}
+++		case 1: 
+++			//Update priority counter if veichle is a car since its now in the approach() state
+++			if(get_vehicle_type(vehiclenumber)){
+++				lock_acquire(priorityB);
+++				priorityB->carCount++;
+++				lock_release(priorityB);
+++				break;
+++			}
+++		case 2: 			
+++			//Update priority counter if veichle is a car since its now in the approach() state
+++			if(get_vehicle_type(vehiclenumber)){
+++				lock_acquire(priorityC);
+++				priorityC->carCount++;
+++				lock_release(priorityC);
+++				break;
+++			}
+++
+++	}
+++	
+++	//Vehicle approaches
+++	approach(vehiclenumber);
+++
+++	//Turn left
+++	if(get_vehicle_turn_direction(vehiclenumber)){
+++		//Only allow one car to go left at a time. Reduces gridlock.
+++	 	 lock_acquire(intersection);
+++		 turn_left(vehiclenumber);
+++		 lock_release(intersection);
+++	}
+++
+++	//Turn right
+++	else if(!get_vehicle_turn_direction(vehiclenumber)){
+++		turn_right(vehiclenumber);
+++	}
+++ 
+++	//Sync the finish() by waiting for all vehicles to exit
+++	lock_acquire(done);
+++	finished++;
+++	lock_release(done);
++ 
++ 	/* Note: Throughout this project you will use the get_vehicle_* functions
++ 	 * to get various information about the vehicle. For example:
++@@ -144,6 +411,23 @@ stoplight_driver(int vehicle_count)
++ {
++ 	/* Your initialization code should go here. */
++ 
+++	//Left turns
+++	intersection = lock_create("INTERSECTION LOCK");
+++
+++	//Right turns
+++	A = lock_create("ROUTE A LOCK");
+++	B = lock_create("ROUTE B LOCK");
+++	C = lock_create("ROUTE C LOCK");
+++
+++	//Car count per route (used to update carCount)
+++	priorityA = lock_create("PRIORITTY LOCK ROUTE A");
+++	priorityB = lock_create("PRIORITTY LOCK ROUTE B");
+++	priorityC = lock_create("PRIORITTY LOCK ROUTE C");
+++
+++	//Wait for all cars to exit intersection
+++	finished = 0;
+++	done = lock_create("THREAD CROSSED INTERESCTION");
+++
++ 	/* This loop creates the vehicle threads. You should not change the code
++ 	 * inside the loop -- all of your vehicle logic should be inside the vehicle
++ 	 * threads themselves. */
++@@ -162,7 +446,9 @@ stoplight_driver(int vehicle_count)
++ 				strerror(error));
++ 		}
++ 	}
++-
+++	while(finished != vehicle_count) {
+++		thread_yield();
+++	}
++ 	/* This function indicates the end of the stoplight problem.
++ 	 * This kind of thing is important in a synchronization problem, as
++ 	 * without a specific indicator that the problem has been concluded,
++@@ -177,6 +463,22 @@ stoplight_driver(int vehicle_count)
++ 	 */
++ 	finish();
++ 
+++	//Free locks for routes
+++	lock_destroy(A);
+++	lock_destroy(B);
+++	lock_destroy(C);
+++
+++	//Free the locks for the priority of a route
+++	lock_destroy(priorityA);
+++	lock_destroy(priorityB);
+++	lock_destroy(priorityC);
+++
+++	//Free the lock used for turning left
+++	lock_destroy(intersection);
+++
+++	//Free the lock used to sync the finish() call
+++	lock_destroy(done);
+++
++ 	/* You will probably want to put your cleanup code here, but you might not
++ 	 * want to actually write it until you've implemented the synchronization of
++ 	 * the finish() call. Consider why you would want to wait to run the cleanup
++diff --git a/kern/asst1/stoplight_framework.c b/kern/asst1/stoplight_framework.c
++index 54f320a..fc99412 100644
++--- a/kern/asst1/stoplight_framework.c
+++++ b/kern/asst1/stoplight_framework.c
++@@ -31,9 +31,9 @@
++  * get_vehicle_turn_direction() for each vehicle.
++  */
++ struct vehicle {
++-	int route;
++-	int type;
++-	int turn_direction;
+++	int route;//0 == a & 1 == b & 2 == c
+++	int type;//0 == truck & 1 == car
+++	int turn_direction;//0 == right & 1 == left
++ };
++ 
++ /**
++@@ -224,7 +224,7 @@ stoplight_random(int nargs, char **args) {
++ 	(void)nargs;
++ 	(void)args;
++ 
++-	setup(100);
+++	setup(255);
++ 
++ 	/* After setup(), randomize all info. Use modulo to get values
++ 	 * in-range.
++@@ -233,13 +233,13 @@ stoplight_random(int nargs, char **args) {
++ 	 * that's OK, as the main point of this test is to have cars
++ 	 * in *all possible combinations*, which it does. */
++ 	int i;
++-	for(i = 0; i < 100; ++i) {
++-		all_vehicles[i].route = random() % 3;
++-		all_vehicles[i].turn_direction = random() % 2;
+++	for(i = 0; i < 255; ++i) {
+++		all_vehicles[i].route = i%3; //random() % 2;
+++		all_vehicles[i].turn_direction = i%2; //random() % 2;
++ 		all_vehicles[i].type = random() % 2;
++ 	}
++ 
++-	stoplight_driver(100);
+++	stoplight_driver(255);
++ 	
++ 	return 0;
++ }
++@@ -270,7 +270,7 @@ stoplight_prio(int nargs, char **args) {
++ 	int i;
++ 	for(i = 0; i < 30; ++i) {
++ 		/* Important: All vehicles on same route, so we can test priority. */
++-		all_vehicles[i].route = ROUTE_A;
+++		all_vehicles[i].route = i%3; //ROUTE_A;
++ 		all_vehicles[i].turn_direction = TURN_RIGHT;
++ 
++ 		/* First 15 low priority, next 15 high priority. */
++@@ -343,4 +343,4 @@ stoplight_custom(int nargs, char **args) {
++ 	}
++ 
++ 	return 0;
++-}
++\ No newline at end of file
+++}
++diff --git a/kern/include/synch.h b/kern/include/synch.h
++index 64b4469..9772825 100644
++--- a/kern/include/synch.h
+++++ b/kern/include/synch.h
++@@ -49,9 +49,10 @@ void              sem_destroy(struct semaphore *);
++  */
++ 
++ struct lock {
++-	char *name;
++-	// add what you need here
++-	// (don't forget to mark things volatile as needed)
+++	char *name; //name of the lock
+++	volatile int held; //0 open and 1 held;
+++	void* holder; // holds the address to a struct that holds the lock
+++	volatile int carCount;// keep track of priority
++ };
++ 
++ 
++diff --git a/kern/thread/synch.c b/kern/thread/synch.c
++index 4c33942..2283f9c 100644
++--- a/kern/thread/synch.c
+++++ b/kern/thread/synch.c
++@@ -101,20 +101,24 @@ V(struct semaphore *sem)
++ struct lock *
++ lock_create(const char *name)
++ {
+++	//Declare lock
++ 	struct lock *lock;
++ 
+++	//Dynamic mem alloc
++ 	lock = kmalloc(sizeof(struct lock));
++ 	if (lock == NULL) {
++ 		return NULL;
++ 	}
++ 
+++	//Update and init fields
++ 	lock->name = kstrdup(name);
++ 	if (lock->name == NULL) {
++ 		kfree(lock);
++ 		return NULL;
++ 	}
++-	
++-	// add stuff here as needed
+++	lock->carCount = 0;
+++	lock->held = 0;
+++	lock->holder = NULL;
++ 	
++ 	return lock;
++ }
++@@ -122,38 +126,70 @@ lock_create(const char *name)
++ void
++ lock_destroy(struct lock *lock)
++ {
+++	//Lock exists
++ 	assert(lock != NULL);
++-
++-	// add stuff here as needed
++-	
+++	//Turn off interrupts
+++	int spl = splhigh();
+++	assert(thread_hassleepers(lock) == 0);
+++	//Turn on interupts
+++	splx(spl);
+++	lock->holder = NULL;
++ 	kfree(lock->name);
++ 	kfree(lock);
++ }
++-
+++//NOTE: when sleeping we store the address of the lock under the current threads sleeping
+++//address field and then store the entire currrent thread in the sleep queue.
+++//When time to wake we look for the first thread with a the same sleeping address i.e.
+++//it will wake up the first thread thats sleeping at this address.
++ void
++ lock_acquire(struct lock *lock)
++ {
++-	// Write this
+++	int spl;
+++	//Make sure lock exists
+++	assert(lock != NULL);
+++	//Not in interrupt
+++	assert(in_interrupt==0);
++ 
++-	(void)lock;  // suppress warning until code gets written
+++	spl = splhigh();//Interupts off
+++	while (lock->held==1) {
+++		thread_sleep(lock); // must be the lock because 
+++				//when we wake a thread we want one from this lock
+++	}
+++	assert(lock->held==0); //make sure its not held
+++	lock->held++;
+++	lock->holder = curthread; //hold the lock
+++	splx(spl); //Interupts back on
++ }
++ 
++ void
++ lock_release(struct lock *lock)
++ {
++-	// Write this
++-
++-	(void)lock;  // suppress warning until code gets written
+++	int spl;
+++	assert(lock != NULL);
+++	spl = splhigh(); // Turn off interupts
+++	if(!lock_do_i_hold(lock)) {
+++		splx(spl); // Turn on interrupts
+++		return;
+++	}
+++	
+++	//Release the lock
+++	lock->held = 0;
+++	lock->holder = NULL;
+++	
+++	//Make sure updates held
+++	assert(lock->held == 0);
+++	assert(lock->holder == NULL);
+++	
+++	thread_wakeup(lock);
+++	splx(spl); // Turn on interrupts
++ }
++ 
++ int
++ lock_do_i_hold(struct lock *lock)
++ {
++-	// Write this
++-
++-	(void)lock;  // suppress warning until code gets written
++-
++-	return 1;    // dummy until code gets written
+++	//Check to see if the current thread is the same as the one stored in lock
+++	if(curthread == lock->holder) return 1;
+++	return 0;   
++ }
++ 
++ ////////////////////////////////////////////////////////////
+diff --git a/asst1-part2/design.txt b/asst1-part2/design.txt
+new file mode 100644
+index 0000000..ba54f22
+--- /dev/null
++++ b/asst1-part2/design.txt
+@@ -0,0 +1,75 @@
++1. High-level overview of the solution Your answer to this question:
++
++I implemented a lock that has two fields. The first "held" , is exactly what it sounds like, it is used to show if the lock is held or not. The second arguement 
++isn't exactly needed, meaning I could have just used a global variable shared between threads, however it provides less clutter this way. This lock was the used
++inside of stoplight for the route, a left turn, and priority for each route. Additioally, a lock was used to sync the proverbial finish line. Using locks in each 
++of these areas combined with switch statment and a couple short loops and we have our solution! After we hit the finish line we make sure to destory the locks and 
++free up any allocated mmory. No leaks!
++
++
++
++2. How many locks you used in your program and for what purpose(s) Your answer to this question
++
++I used a total of 8 locks:
++
++    (a) Route A: only one vehicle can enter from a route per time and is therefor a critical section.
++    (b) Route B: only one vehicle can enter from a route per time and is therefor a critical section.
++    (c) Route C: only one vehicle can enter from a route per time and is therefor a critical section.
++    
++    (d) Left Turn: similarly, my solution only allows for one peron to be taking a left turn at a time. I understand you can have upto two people taking a left at the 
++    same time. For example if A turns left and transfers that then allows for a vehicle from route C to go left. However, I decided against this implementation. Since
++    the project is simulating a real intersection its not realistic to ride someones bumper like that. More over, it would add extra overhead, despite being able to leverage 
++    the extra vehicle turning it exposes the program to more concurrency risk and therefor requires more maticulous and flexible code. 
++    
++    (e) priorityA: This lock is used to access the field native to my lock implementation "carCount", as mentioned earlier I could have used a global instead but I would still
++    need to use a lock to update the data so I combined the two. carCount is used to track the current priority in this route. 
++    (f) priorityB: This lock is used to access the field native to my lock implementation "carCount", as mentioned earlier I could have used a global instead but I would still
++    need to use a lock to update the data so I combined the two. carCount is used to track the current priority in this route. 
++    (g) priorityC: This lock is used to access the field native to my lock implementation "carCount", as mentioned earlier I could have used a global instead but I would still
++    need to use a lock to update the data so I combined the two. carCount is used to track the current priority in this route.     
++    
++    (e) Done: used to sync the threads finsihing before calling finish()
++
++
++3. How you achieved the objective of giving high-priority to cars (compared to trucks); explain what type of data structures and synchronization primitives you used for that purpose
++Your answer to this question
++
++The only data structure I used was my implementation of locks. I was actually unsure of what we could use so I tried to stick to just locks and global counters that were both init before
++thread_fork was looped. I essentially kept track of the approaching cars and incremented then after they enter I will decrement. Inc/dec carCount in the lock responsible for the priority
++of that route. See question 2 e-g for the exact locks used. Additionally any time a thread approaches it will always try to acquire the lock for its route (problem 2 a-c), then after it gets
++its lock we loop and check to see if the thread is a truck and if the respective route priority lock's carCount is not equal to 0. If these are true statements then we release and reaquire the lock
++until the condition is met. This effectively checks for the opportunities for trucks to run ASAP but still allows for them to wait for cars that have also approached.
++
++
++4. Specific rules you implemented to admit, suspend, and wake up a vehicle thread, approaching the intersection from a specific lane: you may want to list separate cases you considered.
++Your answer to this question
++
++--If the vehicle is a car then increment its respective priority lock's carCount and approach
++
++--Else the vehicle is a truck, approach
++
++--If the car wants to turn left grab the left turn lock and proceed to grabbing the respective lock needed to enter your route 
++
++--If you want to turn right then just grab the routes respective lock 
++
++--For a car turning left or right we grab our entry lock, we check to make sure if we are a truck then carCount must be 0 for our route,
++and if not we will release the left turn lock (not needed for right turns obviously) followed by the respective routes entry lock. Then reacquire
++the left turn if needed and is followed by reacquiring the respective entry lock
++
++--We print our entry message
++
++--If we are turning right we the print leave message and release the lock
++
++--If we are turning left then we try to acquire our respective transfer lock then print the transfer message and release the entry lock
++
++--Then if turning left at this point we print leave() and release the transfer lock.
++
++--Now we are back in vehicle_threads and each thread tries to grab the done lock then increment the finished variable. Once it is equal to the vehicle counter
++that was given in stoplight finish() will print and our program will end
++
++--THE END :)
++
++***NOTE: 
++    -I approach() after updating priority with a very brief lock hold to combat an edge case where the first vehicle is a truck & breaks priority.
++    -I can use globals instead of fields in the lock if that is against the rules. I didn't see anything aginst it and also asked on piazza.
++
+diff --git a/asst1-part2/excercises.txt b/asst1-part2/excercises.txt
+new file mode 100644
+index 0000000..b99b5e5
+--- /dev/null
++++ b/asst1-part2/excercises.txt
+@@ -0,0 +1,12 @@
++1) Assume that the residents of Podunk are exceptional and follow the old (and widely ignored) convention that whoever arrives at the intersection first 
++proceeds first. Using the language of synchronization primitives describe the way this intersection is controlled. In what ways is this method suboptimal?
++
++ANSWER: This is a waste of available resources because they are waiting for the car to make EITHER a left OR right turn, but depedning on the choice
++resources could be wasted. For example if car 1 approaches from route A and car 2 from B and car 3 from C all at the same time with A coming a hair before B
++and B a hair before C and car 1 turns right and the other cars both want to turn right as well this causes 2/3 of the resources to be wasted! (i.e. suboptimal approach)
++
++2)Now, assume that the residents of Podunk are like most people and do not follow the convention described above. In what one instance can this three-way-stop
++ intersection produce a deadlock? (It will be helpful to think of this in terms of the model we are using instead of trying to visualize an actual intersection).
++
++ ANSWER: If a car from rotes A, B, and C all have one car enter at the same time and all 3 cars want to turn left then none will be able to proceed. They will all be
++ waiitng for the second lock needed to transfer() i.e. a deadlock.
+diff --git a/asst1-part2/sys161.conf b/asst1-part2/sys161.conf
+new file mode 100644
+index 0000000..44e5db4
+--- /dev/null
++++ b/asst1-part2/sys161.conf
+@@ -0,0 +1,123 @@
++# Sample sys161.conf file
++#
++# This file tells System/161 what devices to use.
++#
++# There are 32 LAMEbus slots on the System/161 motherboard. There may
++# be only one bus controller card, and it must go in slot 31. Other
++# than that, you can put in whatever devices you want.
++#
++# The syntax is simple: one slot per line; the slot number goes first,
++# then the expansion card name, then any arguments. Some of the devices
++# have required arguments.
++#
++# The devices are:
++#
++#   busctl    The LAMEbus controller card. Must go in slot 31, and only
++#             in slot 31. Required argument "ramsize=NUMBER" specifies
++#             the amount of physical RAM in the system. This amount must
++#             be a multiple of the hardware page size (which is probably 
++#             4096 or 8192.) The maximum amount of RAM allowed is 16M;
++#             this restriction is meant as a sanity check and can be 
++#             altered by recompiling System/161.
++#
++#   trace     The System/161 trace controller device. This can be used
++#             by software for various debugging purposes. You can have
++#             more than one trace card, but they all manipulate the 
++#             same internal state. No arguments.
++#
++#   timer     Countdown timer. The timer card also contains a real-time 
++#             clock and a small speaker for beeping. Most configurations
++#             will include at least one timer. No arguments. 
++#
++#   serial    Serial port. This is connected to the standard input and
++#             standard output of the System/161 process, and serves as
++#             the system console. Most configurations need this. There
++#             is no support at present for more than one serial port.
++#             No arguments.
++#
++#   screen    Full-screen memory-mapped text video card. This is 
++#             connected to the standard input and standard output of
++#             the System/161 process, and serves as the system console.
++#             There is no support at present for more than one screen.
++#             Likewise, at present you may not use "screen" and "serial"
++#             together. No arguments. NOTE: not presently implemented.
++#
++#   random    (Pseudo-)random number generator. This accesses the 
++#             randomizer state within System/161; thus, while you can
++#             add multiple random cards, they all return values from the
++#             same pseudorandom sequence. The random seed is set by 
++#             using either the "seed=NUMBER" argument, which sets the
++#             random seed to a specified value, or the "autoseed" 
++#             argument, which sets the random seed based on the host
++#             system clock. If neither argument is given or no random
++#             device is used, the seed is set to 0. Note that the seed
++#             affects various randomized behavior of the system as well
++#             as the values provided by the random device.
++#
++#   disk      Fixed disk. The options are as follows:
++#                 rpm=NUMBER         Set spin rate of disk.
++#                 sectors=NUMBER     Set disk size. Each sector is 512 bytes.
++#                 file=PATH          Specify file to use as storage for disk.
++#                 paranoid           Set paranoid mode.
++#
++#             The "file=PATH" argument must be supplied. The size must be
++#             at least 128 sectors (64k), and the RPM setting must be a
++#             multiple of 60.
++#
++#             The "paranoid" argument, if given, causes fsync() to be 
++#             called on every disk write to make sure the data written
++#             reaches actual stable storage. This will make things very 
++#             slow.
++#
++#             You can have as many disks as you want (until you run out
++#             of slots) but each should have a distinct file to use for
++#             storage. Most common setups will use two separate disks,
++#             one for filesystem storage and one for swapping.
++#
++#   nic       Network card. This allows communication among multiple
++#             simultaneously-running copies of System/161. The arguments
++#             are:
++#                 hub=PATH           Give the path to the hub socket.
++#                 hwaddr=NUMBER      Specify the hardware-level card address.
++#
++#             The hub socket path should be the argument supplied to the
++#             hub161 program. The default is ".sockets/hub".
++#
++#             The hardware address should be unique among the systems 
++#             connected to the same hub. It should be an integer between 
++#             1 and 65534. Values 0 and 65535 are reserved for special
++#             purposes. This argument is required.
++#
++#             NOTE: disable (comment out) nic devices if you aren't 
++#             actively using them, to avoid unnecessary overhead.
++#
++#   emufs     Emulator filesystem. This provides access *within* 
++#             System/161 to the filesystem that System/161 is running
++#             in. There is one optional argument, "dir=PATH". The path
++#             specified is used as the root of the filesystem provided
++#             by emufs. (Note that it is possible to access the real 
++#             parent of this root and thus any other directory; this
++#             argument does not restrict access.) The default path is
++#             ".", meaning System/161's own current directory.
++#
++
++#
++# Here is a suggested default configuration: 512k RAM, two 5M disks.
++#
++
++0	serial
++#0	screen
++
++1	emufs
++
++2	disk	rpm=7200	sectors=10240	file=DISK1.img
++3	disk	rpm=7200	sectors=10240	file=DISK2.img
++
++#27	nic hwaddr=1
++
++28	random	autoseed
++29	timer
++30	trace
++# Note: Maximum possible ram is 16 megabytes (16777216).
++# 2097152 = 2 megabytes.
++31	busctl	ramsize=8388608
+diff --git a/asst2-part1/code-reading.txt b/asst2-part1/code-reading.txt
+new file mode 100644
+index 0000000..ddf69c1
+--- /dev/null
++++ b/asst2-part1/code-reading.txt
+@@ -0,0 +1,42 @@
++CODING QUESTIONS:
++
++1) An ELF magic number is placed as the first 4 bytes of a file and used to interpret it as an ELF executable '0x7', 'E', 'L', 'F'
++
++Also provides other information about the files formatting.
++
++2) UIO_USERISPACE is the area in memory where the instructions for a process lives(executable) and UIO_USERSPACE is the part of memory where data 
++lives. Both for a respective user process. UIO_SYSSPACE is used to access memory from within the kernel space.
++
++3) uio can be alloc on the stack in load_segment() due to it only holding information REGARDING the data being transferred and not the actual data 
++that IS BEING TRANSFFERED. In fact the vaddr is where the information is actually read into. (i.e. a virtual address in the  user address space)
++
++4) It is important to close the executable because the kernel no longer needs it and if a later process needs to use this executable then we want to 
++be able to. Also since runprogram never returns due to md_usermode we could aslo have a memory leak. Further more, its of no use for the user so why 
++wouldn't we.
++
++5) mips_usermode calls asm_usermode which then forces the switch and is only to be used in mips port(i.e. machine dependent for and meant to be used for MIPS).
++
++6) copyin/out is defined in os161/kern/lib/copyinout.c and memmove is defined in os161/lib/libc/memmove.c
++
++Its not as simple to implement copy in and out becuase they move data between the kernel and a user process while memmove being a standard C function only 
++allows you to move memory within the same address space of the process it is called on. i.e there is a much larger secuirty risk to deal with.
++
++7) The purpose of the userptr_t is to differentiate between pointers to the kernel space and user space. Points to a struct holding a single character 
++while pointers to kernel space are of type void.
++
++8) The value of the system call exception code is 8 and denoted by EX_SYS
++
++9) By setting spl manually we avoid any extra over head that is not needed at this time since the only functions of spl_high() are to set curspl to high 
++and then return the old value. As you can see in the line above we already save the previous state manually as well. i.e it is more effiicent at this point to
++set the value manually and the trap needs it to be set right away.
++
++10) An instruction in mips is 32 bits or 4 bytes as pointed out in syscall.c when updating the PC.
++
++11) We will HAVE to change the implementation of kill_curthread() becasue for this project we must implement user progs and right now the function
++does not know how to handle these types of processes. 
++
++12) The addiitonal args would have to be fetched from the user level stack as stated in syscall.c
++
++13 & 14) SYSCALL macro/instruction is responsible for starting a system call and takes in 2 arguements. First the name of the system call, and second the number associated with it.
++
++
+diff --git a/asst2-part1/progress-report.txt b/asst2-part1/progress-report.txt
+new file mode 100644
+index 0000000..f7fa2fb
+--- /dev/null
++++ b/asst2-part1/progress-report.txt
+@@ -0,0 +1,24 @@
++Patrick Doyne
++G#01355212
++Date: 04/11/2025
++
++PROGRESS REPORT:
++
++I began by doing a quick skim of all the files in the directories I have used to refresh my memory and then began reading the project description. As 
++I answered the code-reading questions I made note of important interworkings between the files such as file types, syscall, user space(split into data and code)
++and kernel space. Similarly I was able to see the values of exception codes and how the trap table fits together with SYSCALL(symbl,num) to interface between
++the kernel and userland. 
++
++After these questions were finished I made my way reading through the rest of the document and examining mentioned directories/files. I created a rough
++ordering of attack for how I will implement things on my end. I will start with fork and exec since they are the heart of the project, then move to getpid and 
++getppid then finish with exit and waitpid. However, before doing this it is important to go through the man pages for each one as I do each. This will allow
++for me to follow proper exception codes and return values. I am still trying to make exact sense of how to test things and where to put things, but so far the 
++general idea seems to be okay. I will have to investigate the use of functions from different files and take my time drawing out what the OS looks like internally
++to enable a more concise solution to form.
++
++As of now my understanding is unistd.h contains the definitions for what a user program would include in their source code to start a system call, and
++kern/include/syscall.h will include all of the definitions for my own programmer created system call implementations. Then the actual implementation of these
++system calls will be placed in the userprog directory which will hold a source file for each of the syscalls for neatness. Each will include this syscall.h
++header file as well. Also while devloping this I should note callno.h contains the syscall numbers and should also be in each of the source files.
++
++
+diff --git a/kern/arch/mips/include/machine/trapframe.h b/kern/arch/mips/include/machine/trapframe.h
+index bb48591..1032881 100644
+--- a/kern/arch/mips/include/machine/trapframe.h
++++ b/kern/arch/mips/include/machine/trapframe.h
+@@ -1,6 +1,9 @@
+ #ifndef _MIPS_TRAPFRAME_H_
+ #define _MIPS_TRAPFRAME_H_
+ 
++#include <addrspace.h>
++
++
+ /*
+  * Structure describing what is saved on the stack during entry to
+  * the exception handler.
+@@ -72,6 +75,6 @@ struct trapframe {
+  * happen.
+  */
+ void mips_usermode(struct trapframe *tf);
+-void md_forkentry(struct trapframe *tf);
++void md_forkentry(struct trapframe *tf, unsigned long addr);
+ 
+ #endif /* _MIPS_TRAPFRAME_H_ */
+diff --git a/kern/arch/mips/mips/syscall.c b/kern/arch/mips/mips/syscall.c
+index 396863a..37d30fb 100644
+--- a/kern/arch/mips/mips/syscall.c
++++ b/kern/arch/mips/mips/syscall.c
+@@ -6,6 +6,8 @@
+ #include <machine/trapframe.h>
+ #include <kern/callno.h>
+ #include <syscall.h>
++#include <thread.h>
++#include <curthread.h>
+ 
+ /* forward-declare; see below */
+ static int dumb_sys_write(int unused_fd, userptr_t str, size_t bytes, int32_t *retval);
+@@ -69,12 +71,45 @@ mips_syscall(struct trapframe *tf)
+ 
+ 	int32_t retval = 0;
+ 	int err = 0;
+-
++	
+ 	switch (callno) {
+ 	    case SYS_reboot:
+ 		err = sys_reboot(tf->tf_a0);
+ 		break;
+ 
++		case SYS_getpid:
++		retval = sys_getpid();
++		break;
++
++		case SYS_getppid:
++		retval = sys_getppid();
++		if(retval == -1){
++			err = -1;
++		}
++		break;
++
++		case SYS_fork:
++		err = sys_fork(tf, &retval);
++		break;
++
++		case SYS_execv:
++		err = sys_execv((char *)tf->tf_a0, (char **)tf->tf_a1);	
++		break;
++
++		case SYS_waitpid:
++		retval = sys_waitpid((pid_t)tf->tf_a0, (userptr_t)tf->tf_a1, (int)tf->tf_a2);
++		if(retval == -1){
++			err = 1;
++		}
++		if(retval == -2){
++			err = 2;
++		}
++		break;
++
++		case SYS__exit:
++		err = sys__exit(tf->tf_a0);
++		retval = tf->tf_a0;
++		break;
+ 	    /* Add stuff here */
+  
+ 
+@@ -142,16 +177,22 @@ mips_syscall(struct trapframe *tf)
+ }
+ 
+ void
+-md_forkentry(struct trapframe *tf)
++md_forkentry(struct trapframe *tf, unsigned long addr)
+ {
+-	/*
+-	 * This function is provided as a reminder. You need to write
+-	 * both it and the code that calls it.
+-	 *
+-	 * Thus, you can trash it and do things another way if you prefer.
+-	 */
++	tf->tf_v0 = 0;
++	tf->tf_a3 = 0;
++	tf->tf_epc += 4;
++
++	curthread->t_vmspace = (struct addrspace*)addr;
++	as_activate(curthread->t_vmspace);
++
++	struct trapframe ctf;
++	ctf = *tf;
++
++	kfree(tf);
++	mips_usermode(&ctf);
++
+ 
+-	(void)tf;
+ }
+ 
+ /**
+diff --git a/kern/include/syscall.h b/kern/include/syscall.h
+index 339514d..b8c5234 100644
+--- a/kern/include/syscall.h
++++ b/kern/include/syscall.h
+@@ -6,6 +6,11 @@
+  */
+ 
+ int sys_reboot(int code);
+-
++pid_t sys_getpid();
++pid_t sys_getppid();
++pid_t sys_fork(struct trapframe *parent_tf ,int *ret);
++int sys_execv(char *program, char **args);
++int sys_waitpid(pid_t pid, userptr_t status, int options);
++int sys__exit(int code);
+ 
+ #endif /* _SYSCALL_H_ */
+diff --git a/kern/include/test.h b/kern/include/test.h
+index a8ddc44..6b3ae8f 100644
+--- a/kern/include/test.h
++++ b/kern/include/test.h
+@@ -48,6 +48,6 @@ int nettest(int, char **);
+ void menu(char *argstr);
+ 
+ /* Routine for running userlevel test code. */
+-int runprogram(char *progname);
++int runprogram(char *progname, char ** args, int argc);
+ 
+ #endif /* _TEST_H_ */
+diff --git a/kern/include/thread.h b/kern/include/thread.h
+index b051467..a09a9a2 100644
+--- a/kern/include/thread.h
++++ b/kern/include/thread.h
+@@ -7,10 +7,27 @@
+ 
+ /* Get machine-dependent stuff */
+ #include <machine/pcb.h>
++#include <array.h>
++#include <synch.h>
+ 
+ 
+ struct addrspace;
+ 
++extern struct lock* wait;
++// Table containing all "processes"
++extern struct array *processes;
++
++// Table containing availability of pids
++extern struct array *ptable;
++
++//Table containing threads waiting for PID to exit( Index == PID of what we are waiting more and the value stored at the index is a pointer to the thread
++// that is waiting for the thread pid to exit)
++extern struct array *waitTable;
++
++//Holds exit codes of exited processes that did not use wait table
++extern struct array *exits;
++
++
+ struct thread {
+ 	/**********************************************************/
+ 	/* Private thread members - internal to the thread system */
+@@ -20,6 +37,10 @@ struct thread {
+ 	char *t_name;
+ 	const void *t_sleepaddr;
+ 	char *t_stack;
++	int exit_status;
++	pid_t pid;
++	pid_t ppid;
++	int child_exit_status;
+ 	
+ 	/**********************************************************/
+ 	/* Public thread members - can be used by other code      */
+diff --git a/kern/lib/array.c b/kern/lib/array.c
+index 10126ce..a1ea6b5 100644
+--- a/kern/lib/array.c
++++ b/kern/lib/array.c
+@@ -127,7 +127,7 @@ array_remove(struct array *a, int index)
+ }
+ 
+ void
+-array_destroy(struct array *a)
++array_destroy(struct array *a) 
+ {
+ 	if (a->v) kfree(a->v);
+ 	kfree(a);
+diff --git a/kern/main/menu.c b/kern/main/menu.c
+index a9e35e0..4da5657 100644
+--- a/kern/main/menu.c
++++ b/kern/main/menu.c
+@@ -57,16 +57,17 @@ cmd_progthread(void *ptr, unsigned long nargs)
+ 
+ 	assert(nargs >= 1);
+ 
+-	if (nargs > 2) {
+-		kprintf("Warning: argument passing from menu not supported\n");
+-	}
++	/* Not needed anymore */
++	// if (nargs > 2) {
++	// 	kprintf("Warning: argument passing from menu not supported\n");
++	// }
+ 
+ 	/* Hope we fit. */
+ 	assert(strlen(args[0]) < sizeof(progname));
+-
+ 	strcpy(progname, args[0]);
+ 
+-	result = runprogram(progname);
++	result = runprogram(progname, args, (int)nargs);
++
+ 	if (result) {
+ 		kprintf("Running program %s failed: %s\n", args[0],
+ 			strerror(result));
+@@ -99,15 +100,18 @@ common_prog(int nargs, char **args)
+ 	panic("'p' menu command is not supported during ASST1.\n"
+ 	"If you're working on ASST0 or ASST2, make sure you ran ./configure.\n\n");
+ #endif
+-
++	struct thread* nThread = (struct thread *)kmalloc(sizeof(struct thread));
+ 	result = thread_fork(args[0] /* thread name */,
+ 			args /* thread arg */, nargs /* thread arg */,
+-			cmd_progthread, NULL);
++			cmd_progthread, &nThread);
+ 	if (result) {
+ 		kprintf("thread_fork failed: %s\n", strerror(result));
+ 		return result;
+ 	}
+ 
++	//Since we come from kernel this is always nThread we wait for
++	if(nargs > 1) sys_waitpid(nThread->pid,(userptr_t)result,0);
++
+ 	return 0;
+ }
+ 
+diff --git a/kern/thread/synch.c b/kern/thread/synch.c
+index 2283f9c..da9e0d3 100644
+--- a/kern/thread/synch.c
++++ b/kern/thread/synch.c
+@@ -9,6 +9,7 @@
+ #include <thread.h>
+ #include <curthread.h>
+ #include <machine/spl.h>
++#include <syscall.h>
+ 
+ ////////////////////////////////////////////////////////////
+ //
+diff --git a/kern/thread/thread.c b/kern/thread/thread.c
+index 75ebad5..f4b3aec 100644
+--- a/kern/thread/thread.c
++++ b/kern/thread/thread.c
+@@ -4,7 +4,7 @@
+ #include <types.h>
+ #include <lib.h>
+ #include <kern/errno.h>
+-#include <array.h>
++//#include <array.h>
+ #include <machine/spl.h>
+ #include <machine/pcb.h>
+ #include <thread.h>
+@@ -33,6 +33,23 @@ static struct array *zombies;
+ /* Total number of outstanding threads. Does not count zombies[]. */
+ static int numthreads;
+ 
++struct lock *wait;
++struct lock *WPID;
++struct lock *exit;
++
++
++// Table containing all "processes"
++struct array *processes;
++
++// Table containing availability of pids
++struct array *ptable;
++
++//Table containing threads waiting for PID to exit( Index == PID of what we are waiting more and the value stored at the index is a pointer to the thread
++// that is waiting for the thread pid to exit)
++struct array *waitTable;
++
++struct array *exits;
++
+ /*
+  * Create a thread. This is used both to create the first thread's 
+  * thread structure and to create subsequent threads.
+@@ -52,11 +69,22 @@ thread_create(const char *name)
+ 		return NULL;
+ 	}
+ 	thread->t_sleepaddr = NULL;
++
+ 	thread->t_stack = NULL;
+ 	
+ 	thread->t_vmspace = NULL;
+ 
+ 	thread->t_cwd = NULL;
++
++	thread->ppid = -1; //doesn't exist for root
++
++	thread->exit_status = -999;
++
++	thread->child_exit_status = -999;
++
++	thread->pid = 0;
++
++
+ 	
+ 	// If you add things to the thread structure, be sure to initialize
+ 	// them here.
+@@ -168,6 +196,9 @@ thread_panic(void)
+ struct thread *
+ thread_bootstrap(void)
+ {
++	//Create the waitTable lock;
++	wait = lock_create("WAITTABLE");
++
+ 	struct thread *me;
+ 
+ 	/* Create the data structures we need. */
+@@ -180,7 +211,28 @@ thread_bootstrap(void)
+ 	if (zombies==NULL) {
+ 		panic("Cannot create zombies array\n");
+ 	}
++
++	processes = array_create();
++	if (processes==NULL) {
++		panic("Cannot create process array\n");
++	}
++
++	ptable = array_create();
++	if (ptable==NULL) {
++		panic("Cannot create pids state array\n");
++	}
++
++	waitTable = array_create();
++	if (waitTable==NULL) {
++		panic("Cannot create wait table array\n");
++	}
++
++	exits = array_create();
++	if (exits==NULL) {
++		panic("Cannot create wait table array\n");
++	}
+ 	
++
+ 	/*
+ 	 * Create the thread structure for the first thread
+ 	 * (the one that's already running)
+@@ -203,6 +255,39 @@ thread_bootstrap(void)
+ 
+ 	/* Number of threads starts at 1 */
+ 	numthreads = 1;
++	me->pid = 1;
++
++	
++
++	//Set size of pid table and fill index 1 as used by root process as PID 1. Also set up process table that holds a pointer to each process at index PID.
++	int state = 1;
++	void *set = &state;
++	array_preallocate(ptable, 130);
++	array_preallocate(processes, 130);
++	array_preallocate(waitTable, 130);
++	array_preallocate(exits, 130);
++
++	array_setsize(ptable, 130);
++	array_setsize(processes, 130);
++	array_setsize(waitTable, 130);
++	array_setsize(exits, 130);
++
++	array_setguy(ptable, 1, set);
++	array_setguy(processes, 1, me);
++	array_setguy(waitTable, 1, NULL);
++	array_setguy(exits, 1, NULL);
++
++
++	state--;
++
++	for(int i = 2; i < 130; i++) {
++		//Show PIDS [index (i)] 2-130 are not in use by setting pointer 'set' to NULL for all
++		array_setguy(ptable, i, NULL);
++		//Show slots 2-130 in the table do not contain a process
++		array_setguy(processes, i , NULL);
++		array_setguy(waitTable, i , NULL);
++		array_setguy(exits, i , NULL);
++	}
+ 
+ 	/* Done */
+ 	return me;
+@@ -262,9 +347,11 @@ thread_fork(const char *name,
+ 		newguy->t_cwd = curthread->t_cwd;
+ 	}
+ 
++	//Set pointer to parent for getppid later on
++	newguy->ppid = curthread->pid;
++
+ 	/* Set up the pcb (this arranges for func to be called) */
+ 	md_initpcb(&newguy->t_pcb, newguy->t_stack, data1, data2, func);
+-
+ 	/* Interrupts off for atomicity */
+ 	s = splhigh();
+ 
+@@ -287,6 +374,32 @@ thread_fork(const char *name,
+ 		goto fail;
+ 	}
+ 
++	// /* Do the same for the process table. */
++	// result = array_preallocate(processes, numthreads+1);
++	// if (result) {
++	// 	goto fail;
++	// }
++
++	//Assign pid (allows for 128  processes as stated in asst2) and update bit array of available pids
++	//Starts at 2 because index 1 is always filled by bootstrap and index 0 is empty i.e 1 bootstrap and 128 other processes allowed
++	int state = 1;
++	void *set = &state;
++	for(int i = 2; i < 130; i++){
++		if(NULL == array_getguy(ptable, i)){
++			//Show this PID is now reserved
++			array_setguy(ptable, i, set);
++			//Add to process table at index PID never fails since we preallocate
++			array_setguy(processes,i, newguy);
++			newguy->pid = i;
++			break;
++		}
++	}
++	//No space right now so we fail
++	if(newguy->pid == 0) {
++		result = EAGAIN;
++		goto fail;
++	}
++
+ 	/* Make the new thread runnable */
+ 	result = make_runnable(newguy);
+ 	if (result != 0) {
+diff --git a/kern/userprog/files.mk b/kern/userprog/files.mk
+index 07b0ebb..1ec23c2 100644
+--- a/kern/userprog/files.mk
++++ b/kern/userprog/files.mk
+@@ -1 +1 @@
+-SRCS-y += loadelf.c runprogram.c uio.c
+\ No newline at end of file
++SRCS-y += loadelf.c runprogram.c uio.c getpid.c getppid.c fork.c execv.c waitpid.c exit.c
+\ No newline at end of file
+diff --git a/kern/userprog/runprogram.c b/kern/userprog/runprogram.c
+index 7473e27..abc0aa4 100644
+--- a/kern/userprog/runprogram.c
++++ b/kern/userprog/runprogram.c
+@@ -22,12 +22,11 @@
+  * Calls vfs_open on progname and thus may destroy it.
+  */
+ int
+-runprogram(char *progname)
++runprogram(char *progname, char ** args, int argc)
+ {
+ 	struct vnode *v;
+ 	vaddr_t entrypoint, stackptr;
+ 	int result;
+-
+ 	/* Open the file. */
+ 	result = vfs_open(progname, O_RDONLY, &v);
+ 	if (result) {
+@@ -64,6 +63,55 @@ runprogram(char *progname)
+ 		/* thread_exit destroys curthread->t_vmspace */
+ 		return result;
+ 	}
++	//Make sure we actually have arguements to move to stack
++	if(argc > 1 ){
++		int nargs = argc;
++		//Array used to update the location and offsets of #argc args
++		//Allow upto 25 args
++		void *stack_args = kmalloc(4*(nargs+1));
++		stack_args+= (4*argc);
++		*(char**)stack_args = NULL;
++
++
++		//Track where we are on the stack without losing original value
++		vaddr_t startPoint = stackptr;
++
++		for(int s = argc - 1; s >= 0; s--){
++			
++			//Original arg[s] size (Add null length at end of string)
++			size_t originalSize = strlen(args[s])+1;
++
++			//Traverse down the stack by #bytes to fit sizing of arch
++			size_t bytesWithPadding = 4-(originalSize%4);
++			if(bytesWithPadding%4 == 0) bytesWithPadding = 0;
++			bytesWithPadding += originalSize;
++
++			size_t realSize;
++			(void) realSize;
++
++			//Decrement stack since it grows down
++			startPoint-=bytesWithPadding;
++			stack_args-=4;
++
++			//Copy string[s] to the location on the stack we need it at
++			copyoutstr(args[s], (userptr_t)startPoint, originalSize, &realSize);
++			//Now we can store this stack address containing the start of the arg at stack_args[s]
++			//This works since now startPoint is an address to a char *
++			*(char**)stack_args = (char*)startPoint;
++		}
++		//Now all args are stored on the stack and we have a pointer to each stored at stack_args[s]
++		//Lastly we need to add these pointers to the stack itself right under the arguements
++
++		copyout(stack_args, (userptr_t) startPoint, (4*argc+1));
++
++		/* Warp to user mode. */
++		md_usermode(nargs /*argc*/, (userptr_t) startPoint /*userspace addr of argv*/,
++				 startPoint, entrypoint);
++
++		panic("md_usermode returned\n");
++		return EINVAL;
++
++	}
+ 
+ 	/* Warp to user mode. */
+ 	md_usermode(0 /*argc*/, NULL /*userspace addr of argv*/,
+diff --git a/pa2-check b/pa2-check
+new file mode 100755
+index 0000000..e5099ba
+Binary files /dev/null and b/pa2-check differ
+diff --git a/pa2-test.sh b/pa2-test.sh
+new file mode 100755
+index 0000000..a32a693
+--- /dev/null
++++ b/pa2-test.sh
+@@ -0,0 +1,152 @@
++#!/bin/bash
++
++if ! ( [ -d kern ] && [ -d lib ] && [ -d man ] && [ -d mk ] ); then
++    echo "$(tput setaf 1)error: $(tput sgr0)$0 was called from the wrong directory."
++    exit 1
++fi
++
++# If the user hits Ctrl+C, just kill the script.
++trap exit 0 INT
++
++# Format of items in this list:
++#
++# test_name timeout
++#
++# So if you think a test needs a longer (or shorter) timeout, you can adjust the
++# numerical values here. We will be replacing this script with our own copy (or
++# otherwise bypassing it) when grading your projects, so feel free to adjust this
++# script in any way you want.
++#
++# Read 'timeout --help' for more information on the valid values for timeouts.
++test_cases=(
++    "at-getpid-simple 1"
++    "at-fork-pidagree 1"
++    "at-fork-limit 5"
++    "at-getppid-stable 1"
++    "at-waitpid-waits 5"
++    "at-waitpid-exitcodes 2"
++    "at-waitpid-nochild 1"
++    "at-waitpid-efault 1"
++    "at-execv-simple 1"
++    "at-execv-add 1"
++    "at-execv-efault-arg 1"
++    "at-exit-exits 1"
++    "at-parameter-passing 1")
++
++# Runs sys161 for the given test case.
++#
++# For most test cases, this just means running the corresponding program in
++# /testbin. But for the parameter passing test specifically, we need to run
++# a specific program in /testbin, and we need to pass it additional parameters
++# on the OS/161 menu command line.
++#
++# So, BEWARE that the parameter-passing test is defined ENTIRELY by this bash
++# script! It determines which arguments are passed, and those are synchronized
++# to match with the provided pa2-check program.
++run_sys161_for_test () {
++    # Arguments: $1 = $test_name
++    #            $2 = $test_timeout
++    if [[ "$1" == "at-parameter-passing" ]]; then
++        timeout "$2" sys161 kernel "p /testbin/at-args-noargv0 hello world parameter passing" > "pa2-test-output/$1-output.txt" 2>/dev/null
++    else
++        timeout "$2" sys161 kernel "p /testbin/$1" > "pa2-test-output/$1-output.txt" 2>/dev/null
++    fi
++}
++
++# Run a single test case. Takes as its argument one of the items from the test
++# case array, such as "ag-simple-getpid 1"
++run_test () {
++    # Split each test case into its name and timeout value.
++    read -ra args <<< "$1"
++    test_name="${args[0]}"
++    test_timeout="${args[1]}"
++    printf "Running test %-20b" "$test_name"
++    cd root
++    # Run the test with a normal timeout. Redirect output to the file.
++    run_sys161_for_test "$test_name" "$test_timeout"
++    cd ..
++    printf " ... "
++    # Run the checker.
++    ./pa2-check "root/pa2-test-output/$test_name-output.txt" \
++        --test-case "$test_name" \
++        --output "root/pa2-test-output/$test_name-errors.txt" \
++        --max-errors-stderr 1 \
++        --failure-prefix-stderr "$(tput setaf 1)FAILED$(tput sgr0)"
++    status="$?"
++    if [ "$status" -eq 0 ]; then
++        echo "$(tput setaf 2)SUCCESS$(tput sgr0)"
++    elif [ "$status" -eq 16 ]; then
++        # Note: the checker will always return 16 in the case of "detected an
++        # error in the test".
++
++        # Put a single newline after the autograder in case of error to more cleanly
++        # separate the different tests.
++        echo
++    else
++        # If the checker returns a non-zero error code, that isn't 16, that means
++        # something like it couldn't open the kernel output file for reading, so
++        # we don't know whether it was successful or not.
++        echo "UNKNOWN -- checker internal error."
++    fi
++}
++
++# Runs all the tests.
++all() {
++    make
++    mkdir -p root/pa2-test-output
++
++    for test in "${test_cases[@]}"
++    do
++        run_test "$test"
++    done
++}
++
++# Prints a list of tests.
++list() {
++    echo "Available automated test cases:"
++    for test in "${test_cases[@]}"
++    do
++        read -ra split <<< "$test"
++        echo "  - ${split[0]}"
++    done
++}
++
++# Runs a single test.
++single() {
++    # Use grep to extract the test case from the list.
++    match=$(echo "${test_cases[@]}" | grep -oE "$1 [0-9]+")
++    if [ "$?" -eq 0 ];  then
++        make
++        mkdir -p root/pa2-test-output
++        run_test "$match"
++    else
++        echo "$(tput setaf 1)error: $(tput sgr0)Couldn't find a test matching '$1'."
++        echo "       Run '$0 help' for help or '$0 list' for a list of test cases."
++        exit 1
++    fi
++}
++
++# Prints usage for the pa2-test.sh script.
++usage() {
++    echo
++    echo "Usage: $0 all | list | help | <test_name>"
++    echo
++    echo "$0 all         -- run all test cases"
++    echo "$0 list        -- print a list of available test cases"
++    echo "$0 help        -- print this menu"
++    echo "$0 <test_name> -- run a single test case"
++    echo
++    echo "If no argument is provided, all test cases will be run."
++    echo
++}
++
++# Main driver of the script--simply determines what to do based on the first
++# command-line argument.
++case $1 in
++    all) all ;;
++    help) usage ;;
++    list) list ;;
++    # If the argument is empty, then run all tests.
++    "") all ;;
++    *) single $1 ;;
++esac
+\ No newline at end of file
+diff --git a/testbin/add/add.c b/testbin/add/add.c
+index 258a5d1..dfa09fe 100644
+--- a/testbin/add/add.c
++++ b/testbin/add/add.c
+@@ -15,6 +15,9 @@ main(int argc, char *argv[])
+ {
+ 	int i, j;
+ 
++	printf("ARGC: %d", argc);
++
++
+ 	if (argc != 3) {
+ 		errx(1, "Usage: add num1 num2");
+ 	}
+diff --git a/testbin/at-add/.gitignore b/testbin/at-add/.gitignore
+new file mode 100755
+index 0000000..366c6cf
+--- /dev/null
++++ b/testbin/at-add/.gitignore
+@@ -0,0 +1,2 @@
++# Ignore the compiled executable for each testbin
++at-add
+diff --git a/testbin/at-add/Makefile b/testbin/at-add/Makefile
+new file mode 100755
+index 0000000..f6ae27c
+--- /dev/null
++++ b/testbin/at-add/Makefile
+@@ -0,0 +1,6 @@
++# Makefile for at-add
++
++SRCS-y=at-add.c
++TARGET_NAME=at-add
++
++include ../../mk/build-testbin.mk
+diff --git a/testbin/at-add/at-add.c b/testbin/at-add/at-add.c
+new file mode 100755
+index 0000000..e41a8a3
+--- /dev/null
++++ b/testbin/at-add/at-add.c
+@@ -0,0 +1,22 @@
++/*
++ * at-add - Adds all the arguments up as numbers. This is not tested directly
++ * but is used to test execv.
++ */
++
++/* Include some standard headers (add more as needed) */
++#include <unistd.h>
++#include <string.h>
++#include <stdlib.h>
++#include <stdio.h>
++#include <err.h>
++
++int
++main(int argc, char **argv) {
++    int sum = 0;
++
++    for(int i = 1; i < argc; ++i) {
++        sum += atoi(argv[i]);
++    }
++
++    printf("SUM: %d\n", sum);
++}
+diff --git a/testbin/at-args-noargv0/.gitignore b/testbin/at-args-noargv0/.gitignore
+new file mode 100755
+index 0000000..f4a9b8f
+--- /dev/null
++++ b/testbin/at-args-noargv0/.gitignore
+@@ -0,0 +1,2 @@
++# Ignore the compiled executable for each testbin
++at-args-noargv0
+diff --git a/testbin/at-args-noargv0/Makefile b/testbin/at-args-noargv0/Makefile
+new file mode 100755
+index 0000000..bd8759d
+--- /dev/null
++++ b/testbin/at-args-noargv0/Makefile
+@@ -0,0 +1,6 @@
++# Makefile for at-args-noargv0
++
++SRCS-y=at-args-noargv0.c
++TARGET_NAME=at-args-noargv0
++
++include ../../mk/build-testbin.mk
+diff --git a/testbin/at-args-noargv0/at-args-noargv0.c b/testbin/at-args-noargv0/at-args-noargv0.c
+new file mode 100755
+index 0000000..b375edb
+--- /dev/null
++++ b/testbin/at-args-noargv0/at-args-noargv0.c
+@@ -0,0 +1,20 @@
++/*
++ * at-args-noargv0 - Simple program that prints its arguments, except for
++ * argv[0], as we don't care what argv[0] is that much for the parameter passing
++ * part of the project.
++ */
++
++/* Include some standard headers (add more as needed) */
++#include <unistd.h>
++#include <string.h>
++#include <stdlib.h>
++#include <stdio.h>
++#include <err.h>
++
++int
++main(int argc, char **argv) {
++    /* skip argv[0] */
++    for(int i = 1; i < argc; ++i) {
++        printf("ARG %d: %s\n", i, argv[i]);
++    }
++}
+diff --git a/testbin/at-args/.gitignore b/testbin/at-args/.gitignore
+new file mode 100755
+index 0000000..2313f76
+--- /dev/null
++++ b/testbin/at-args/.gitignore
+@@ -0,0 +1,2 @@
++# Ignore the compiled executable for each testbin
++at-args
+diff --git a/testbin/at-args/Makefile b/testbin/at-args/Makefile
+new file mode 100755
+index 0000000..75d8380
+--- /dev/null
++++ b/testbin/at-args/Makefile
+@@ -0,0 +1,6 @@
++# Makefile for at-args
++
++SRCS-y=at-args.c
++TARGET_NAME=at-args
++
++include ../../mk/build-testbin.mk
+diff --git a/testbin/at-args/at-args.c b/testbin/at-args/at-args.c
+new file mode 100755
+index 0000000..0dc1b17
+--- /dev/null
++++ b/testbin/at-args/at-args.c
+@@ -0,0 +1,18 @@
++/*
++ * at-args - Simple program that prints out its arguments. Not directly run as
++ * a test, but used for testing execv.
++ */
++
++/* Include some standard headers (add more as needed) */
++#include <unistd.h>
++#include <string.h>
++#include <stdlib.h>
++#include <stdio.h>
++#include <err.h>
++
++int
++main(int argc, char **argv) {
++    for(int i = 0; i < argc; ++i) {
++        printf("ARG %d: %s\n", i, argv[i]);
++    }
++}
+diff --git a/testbin/at-execv-add/.gitignore b/testbin/at-execv-add/.gitignore
+new file mode 100755
+index 0000000..c7057cb
+--- /dev/null
++++ b/testbin/at-execv-add/.gitignore
+@@ -0,0 +1,2 @@
++# Ignore the compiled executable for each testbin
++at-execv-add
+diff --git a/testbin/at-execv-add/Makefile b/testbin/at-execv-add/Makefile
+new file mode 100755
+index 0000000..6f356a5
+--- /dev/null
++++ b/testbin/at-execv-add/Makefile
+@@ -0,0 +1,6 @@
++# Makefile for at-execv-add
++
++SRCS-y=at-execv-add.c
++TARGET_NAME=at-execv-add
++
++include ../../mk/build-testbin.mk
+diff --git a/testbin/at-execv-add/at-execv-add.c b/testbin/at-execv-add/at-execv-add.c
+new file mode 100755
+index 0000000..6cffe05
+--- /dev/null
++++ b/testbin/at-execv-add/at-execv-add.c
+@@ -0,0 +1,82 @@
++/*
++ * at-execv-add - Tests that execv is able to correctly pass arguments to child
++ * processes, by computing several sums.
++ */
++
++/* Include some standard headers (add more as needed) */
++#include <unistd.h>
++#include <string.h>
++#include <stdlib.h>
++#include <stdio.h>
++#include <err.h>
++#include <errno.h>
++
++#include "../at-helpers/at-helpers.h"
++
++#define ARG_COUNT 8
++
++char progname[] = "/testbin/at-add";
++
++char summands[ARG_COUNT][8] = {
++    "7",
++    "15",
++    "21",
++    "42",
++    "112", 
++    "262",
++    "367",
++    "471"
++};
++
++/* plus 2: one for progname at the beginning, one for NULL at the end .*/
++char *args[ARG_COUNT + 2] = { 0 };
++
++int
++do_add(int arg_count) {
++    args[0] = progname;
++    for(int i = 0; i < arg_count; ++i) {
++        args[i + 1] = summands[i];
++    }
++    args[arg_count + 1] = NULL;
++
++    pid_t child = fork();
++    if(child < 0 || errno != 0) {
++        at_fatal_error("fork()");
++        return 1;
++    }
++
++    if(child) {
++        /* If we're the parent, wait for the child */
++        waitpid(child, NULL, 0);
++        printf("VALUE OF ERR: %d\n",child);
++        return 0;
++    }
++
++    /* If we're the child, then perform the add. */
++    int err = execv("/testbin/at-add", args);
++    if(err < 0 || errno != 0) {
++        at_fatal_error("execv()");
++        _exit(0);
++        return 1; /* child always returns non-zero */
++    }
++
++    /* Also as the child, be sure to exit. */
++    _exit(0);
++
++
++    /* If we're the child, and _exit doesn't work, signal to main() to
++     * break the loop. */
++    return 1;
++}
++
++int
++main() {
++    for(int i = 1; i < ARG_COUNT; ++i) {
++        int err = do_add(i);
++
++        /* Exit the loop early if we run into an error. */
++        if(err) return 0;
++    }
++
++    return 0;
++}
+diff --git a/testbin/at-execv-efault-arg/.gitignore b/testbin/at-execv-efault-arg/.gitignore
+new file mode 100755
+index 0000000..d3172a7
+--- /dev/null
++++ b/testbin/at-execv-efault-arg/.gitignore
+@@ -0,0 +1,2 @@
++# Ignore the compiled executable for each testbin
++at-execv-efault-arg
+diff --git a/testbin/at-execv-efault-arg/Makefile b/testbin/at-execv-efault-arg/Makefile
+new file mode 100755
+index 0000000..3a44cf0
+--- /dev/null
++++ b/testbin/at-execv-efault-arg/Makefile
+@@ -0,0 +1,6 @@
++# Makefile for at-execv-efault-arg
++
++SRCS-y=at-execv-efault-arg.c
++TARGET_NAME=at-execv-efault-arg
++
++include ../../mk/build-testbin.mk
+diff --git a/testbin/at-execv-efault-arg/at-execv-efault-arg.c b/testbin/at-execv-efault-arg/at-execv-efault-arg.c
+new file mode 100755
+index 0000000..fa6acc8
+--- /dev/null
++++ b/testbin/at-execv-efault-arg/at-execv-efault-arg.c
+@@ -0,0 +1,36 @@
++/*
++ * at-execv-efault-arg - Checks that execv() will return EFAULT when we pass a
++ * pointer to kernel space as one of the points inside argv.
++ * 
++ * Note that execv() should also return EFAULT in other cases, such as when
++ * the argv array itself points inside kernel space.
++ */
++
++/* Include some standard headers (add more as needed) */
++#include <unistd.h>
++#include <string.h>
++#include <stdlib.h>
++#include <stdio.h>
++#include <err.h>
++#include <errno.h>
++
++#include "../at-helpers/at-helpers.h"
++
++int
++main() {
++    /* On MIPS, this is in kernel space */
++    char *invalid = (char*)0xF00DF00D;
++
++    const char *args[] = {
++        "hello",
++        "world",
++        "execv",
++        "is",
++        "faulting",
++        invalid
++    };
++
++    int err = execv("/testbin/at-args", (char**)args);
++    
++    at_expect_error(err);
++}
+diff --git a/testbin/at-execv-simple/.gitignore b/testbin/at-execv-simple/.gitignore
+new file mode 100755
+index 0000000..3d6657c
+--- /dev/null
++++ b/testbin/at-execv-simple/.gitignore
+@@ -0,0 +1,2 @@
++# Ignore the compiled executable for each testbin
++at-execv-simple
+diff --git a/testbin/at-execv-simple/Makefile b/testbin/at-execv-simple/Makefile
+new file mode 100755
+index 0000000..b75cbb3
+--- /dev/null
++++ b/testbin/at-execv-simple/Makefile
+@@ -0,0 +1,6 @@
++# Makefile for at-execv-simple
++
++SRCS-y=at-execv-simple.c
++TARGET_NAME=at-execv-simple
++
++include ../../mk/build-testbin.mk
+diff --git a/testbin/at-execv-simple/at-execv-simple.c b/testbin/at-execv-simple/at-execv-simple.c
+new file mode 100755
+index 0000000..efa955c
+--- /dev/null
++++ b/testbin/at-execv-simple/at-execv-simple.c
+@@ -0,0 +1,30 @@
++/*
++ * at-execv-simple - Does a simple call to execv() to check that we can
++ * successfully pass arguments to a child program.
++ */
++
++/* Include some standard headers (add more as needed) */
++#include <unistd.h>
++#include <string.h>
++#include <stdlib.h>
++#include <stdio.h>
++#include <err.h>
++
++#include "../at-helpers/at-helpers.h"
++
++int
++main() {
++    const char *args[] = {
++        "hello",
++        "world",
++        "execv",
++        "is",
++        "working",
++        "now?"
++    };
++
++    int err = execv("/testbin/at-args", (char**)args);
++    if(err < 0 || errno != 0) {
++        at_fatal_error("execv()");
++    }
++}
+diff --git a/testbin/at-exit-exits/.gitignore b/testbin/at-exit-exits/.gitignore
+new file mode 100755
+index 0000000..af2c53a
+--- /dev/null
++++ b/testbin/at-exit-exits/.gitignore
+@@ -0,0 +1,2 @@
++# Ignore the compiled executable for each testbin
++at-exit-exits
+diff --git a/testbin/at-exit-exits/Makefile b/testbin/at-exit-exits/Makefile
+new file mode 100755
+index 0000000..e7c438b
+--- /dev/null
++++ b/testbin/at-exit-exits/Makefile
+@@ -0,0 +1,6 @@
++# Makefile for at-exit-exits
++
++SRCS-y=at-exit-exits.c
++TARGET_NAME=at-exit-exits
++
++include ../../mk/build-testbin.mk
+diff --git a/testbin/at-exit-exits/at-exit-exits.c b/testbin/at-exit-exits/at-exit-exits.c
+new file mode 100755
+index 0000000..586d6cb
+--- /dev/null
++++ b/testbin/at-exit-exits/at-exit-exits.c
+@@ -0,0 +1,21 @@
++/*
++ * at-exit-exits - Makes sure that _exit actually exits the program.
++ */
++
++/* Include some standard headers (add more as needed) */
++#include <unistd.h>
++#include <string.h>
++#include <stdlib.h>
++#include <stdio.h>
++#include <err.h>
++
++int
++main() {
++    /* Note: In some broken implementations of _exit, we will see this message
++     * appear more than once, which is also an error. */
++    printf("EXPECTED\n");
++
++    _exit(0);
++
++    printf("UNEXPECTED\n");
++}
+diff --git a/testbin/at-fork-limit/.gitignore b/testbin/at-fork-limit/.gitignore
+new file mode 100755
+index 0000000..ac7707d
+--- /dev/null
++++ b/testbin/at-fork-limit/.gitignore
+@@ -0,0 +1,2 @@
++# Ignore the compiled executable for each testbin
++at-fork-limit
+diff --git a/testbin/at-fork-limit/Makefile b/testbin/at-fork-limit/Makefile
+new file mode 100755
+index 0000000..b0728de
+--- /dev/null
++++ b/testbin/at-fork-limit/Makefile
+@@ -0,0 +1,6 @@
++# Makefile for at-fork-limit
++
++SRCS-y=at-fork-limit.c
++TARGET_NAME=at-fork-limit
++
++include ../../mk/build-testbin.mk
+diff --git a/testbin/at-fork-limit/at-fork-limit.c b/testbin/at-fork-limit/at-fork-limit.c
+new file mode 100755
+index 0000000..2764f44
+--- /dev/null
++++ b/testbin/at-fork-limit/at-fork-limit.c
+@@ -0,0 +1,43 @@
++/*
++ * at-fork-limit - checks to make sure that fork() eventually returns an error
++ * if called in a loop.
++ */
++
++/* Include some standard headers (add more as needed) */
++#include <unistd.h>
++#include <string.h>
++#include <stdlib.h>
++#include <stdio.h>
++#include <err.h>
++#include <errno.h>
++
++int
++main() {
++    int success = 0;
++
++    for(;;) {
++        pid_t pid = fork();
++               
++        if(pid == 0) {
++            /* Child process -- print a message, then exit.
++             * Until the parent reaps us, we should at least be taking up
++             * space in the process table, so we should exhaust the PID resource
++             * if nothing else. */ 
++            printf("CHILD\n");
++            return 0;
++        }
++        else {
++            /* Parent process. Keep looping, or, if we got an error, print
++             * the error and exit. */
++            if(pid < 0 || errno != 0) {
++                printf("PARENT: fork error = %d - %s\n", errno, strerror(errno));
++                printf("PARENT: success = %d\n", success);
++                break;
++            }
++
++            /* If we didn't get an error, we got a success, so update the
++             * success counter. */
++            success += 1;
++        }
++    }
++}
+diff --git a/testbin/at-fork-pidagree/.gitignore b/testbin/at-fork-pidagree/.gitignore
+new file mode 100755
+index 0000000..176273e
+--- /dev/null
++++ b/testbin/at-fork-pidagree/.gitignore
+@@ -0,0 +1,2 @@
++# Ignore the compiled executable for each testbin
++at-fork-pidagree
+diff --git a/testbin/at-fork-pidagree/Makefile b/testbin/at-fork-pidagree/Makefile
+new file mode 100755
+index 0000000..5a884eb
+--- /dev/null
++++ b/testbin/at-fork-pidagree/Makefile
+@@ -0,0 +1,6 @@
++# Makefile for at-fork-pidagree
++
++SRCS-y=at-fork-pidagree.c
++TARGET_NAME=at-fork-pidagree
++
++include ../../mk/build-testbin.mk
+diff --git a/testbin/at-fork-pidagree/at-fork-pidagree.c b/testbin/at-fork-pidagree/at-fork-pidagree.c
+new file mode 100755
+index 0000000..feef21c
+--- /dev/null
++++ b/testbin/at-fork-pidagree/at-fork-pidagree.c
+@@ -0,0 +1,32 @@
++/*
++ * at-fork-pidagree - checks whether child and parent agree on what each other's
++ * PID values are.
++ */
++
++/* Include some standard headers (add more as needed) */
++#include <unistd.h>
++#include <string.h>
++#include <stdlib.h>
++#include <stdio.h>
++#include <err.h>
++
++#include "../at-helpers/at-helpers.h"
++
++int
++main() {
++    pid_t pid = fork();
++
++    if(pid < 0 || errno != 0) {
++        at_fatal_error("fork()");
++        return 0;
++    }
++
++    if(pid) {
++        /* Parent code */
++        printf("PARENT: getpid  = %d fork   = %d\n", getpid(), pid);
++    }
++    else {
++        /* Child code */
++        printf("CHILD:  getppid = %d getpid = %d\n", getppid(), getpid());
++    }
++}
+diff --git a/testbin/at-getpid-simple/.gitignore b/testbin/at-getpid-simple/.gitignore
+new file mode 100755
+index 0000000..0196473
+--- /dev/null
++++ b/testbin/at-getpid-simple/.gitignore
+@@ -0,0 +1,2 @@
++# Ignore the compiled executable for each testbin
++at-getpid-simple
+diff --git a/testbin/at-getpid-simple/Makefile b/testbin/at-getpid-simple/Makefile
+new file mode 100755
+index 0000000..28a2807
+--- /dev/null
++++ b/testbin/at-getpid-simple/Makefile
+@@ -0,0 +1,6 @@
++# Makefile for at-getpid-simple
++
++SRCS-y=at-getpid-simple.c
++TARGET_NAME=at-getpid-simple
++
++include ../../mk/build-testbin.mk
+diff --git a/testbin/at-getpid-simple/at-getpid-simple.c b/testbin/at-getpid-simple/at-getpid-simple.c
+new file mode 100755
+index 0000000..d5225b8
+--- /dev/null
++++ b/testbin/at-getpid-simple/at-getpid-simple.c
+@@ -0,0 +1,17 @@
++/*
++ * at-getpid-simple: check that getpid always returns the same value.
++ */
++
++/* Include some standard headers (add more as needed) */
++#include <unistd.h>
++#include <string.h>
++#include <stdlib.h>
++#include <stdio.h>
++#include <err.h>
++
++int
++main() {
++    for(int i = 0; i < 5; ++i) {
++        printf("CALLED getpid(): %d\n", getpid());
++    }
++}
+\ No newline at end of file
+diff --git a/testbin/at-getppid-stable/.gitignore b/testbin/at-getppid-stable/.gitignore
+new file mode 100755
+index 0000000..13171dd
+--- /dev/null
++++ b/testbin/at-getppid-stable/.gitignore
+@@ -0,0 +1,2 @@
++# Ignore the compiled executable for each testbin
++at-getppid-stable
+diff --git a/testbin/at-getppid-stable/Makefile b/testbin/at-getppid-stable/Makefile
+new file mode 100755
+index 0000000..7671141
+--- /dev/null
++++ b/testbin/at-getppid-stable/Makefile
+@@ -0,0 +1,6 @@
++# Makefile for at-getppid-stable
++
++SRCS-y=at-getppid-stable.c
++TARGET_NAME=at-getppid-stable
++
++include ../../mk/build-testbin.mk
+diff --git a/testbin/at-getppid-stable/at-getppid-stable.c b/testbin/at-getppid-stable/at-getppid-stable.c
+new file mode 100755
+index 0000000..a3352f2
+--- /dev/null
++++ b/testbin/at-getppid-stable/at-getppid-stable.c
+@@ -0,0 +1,37 @@
++/*
++ * at-getppid-stable - Ensures that getppid() is stable while the parent process
++ * is still alive.
++ */
++
++/* Include some standard headers (add more as needed) */
++#include <unistd.h>
++#include <string.h>
++#include <stdlib.h>
++#include <stdio.h>
++#include <err.h>
++#include "../at-helpers/at-helpers.h"
++
++int
++main() {
++    
++    pid_t pid = fork();
++
++
++    if(pid < 0 || errno != 0) {
++        at_fatal_error("fork()");
++        return 0;
++    }
++
++    /* As the child, we will print out getppid() several times to make sure
++     * it stays the same. */
++    if(!pid) {
++        for(int i = 0; i < 5; ++i) {
++            printf("CALLED getppid(): %d\n", getppid());
++        }
++    }
++    else {
++        /* As the parent, we will make sure we stay alive long enough for the
++         * child to print its messages. */
++        waitpid(pid, NULL, 0);
++    }
++}
+diff --git a/testbin/at-helpers/Makefile b/testbin/at-helpers/Makefile
+new file mode 100755
+index 0000000..10b2ca5
+--- /dev/null
++++ b/testbin/at-helpers/Makefile
+@@ -0,0 +1,8 @@
++# Because we're in the testbin folder, the root Makefile will try to compile
++# us. So, provide some dummy targets to make sure it isn't angry.
++
++all:
++
++clean:
++
++.PHONY: all clean
+\ No newline at end of file
+diff --git a/testbin/at-helpers/at-helpers.h b/testbin/at-helpers/at-helpers.h
+new file mode 100755
+index 0000000..4800fb2
+--- /dev/null
++++ b/testbin/at-helpers/at-helpers.h
+@@ -0,0 +1,47 @@
++#ifndef AT_HELPERS_H
++#define AT_HELPERS_H
++
++/* This header file defines some static inline helper functions for use in the
++ * automated test code.
++ *
++ * Essentially, we will just compile a copy of each function into all of the
++ * test programs that use it. This isn't the most sophisticated library
++ * function strategy--but it does work, and helps make the automated tests
++ * have more consistent messaging. */
++
++#include <errno.h>
++
++/**
++ * Helper function for printing fatal error messages in a consistent format.
++ * 
++ * If we print one of these, then we essentially ran into a problem where a
++ * syscall failed in a situation where it really has no reason to fail for
++ * that test case. This usually means that that syscall is either unimplemented,
++ * or is partially broken, and that it will need to be either implemented or
++ * fixed so that the rest of the test case can run.
++ */
++static inline void
++at_fatal_error(const char *function) {
++    printf("FATAL: %s had error %d - %s\n", function, errno, strerror(errno));
++}
++
++/**
++ * Prints a message based on a function that we expect to fail.
++ * 
++ * We pass the return value from the function, which should be negative. Then,
++ * this function prints out either that we did get an error, and the associated
++ * errno and error string, or that we got no error.
++ */
++static inline void
++at_expect_error(int retval) {
++    /* Check both of these. Otherwise, we did not actually *correctly* receive
++     * an error. */
++    if(retval < 0 && errno != 0) {
++        printf("GOT ERROR: %d - %s\n", errno, strerror(errno));
++    }
++    else {
++        printf("GOT NO ERROR\n");
++    }
++}
++
++#endif
+\ No newline at end of file
+diff --git a/testbin/at-waitpid-efault/.gitignore b/testbin/at-waitpid-efault/.gitignore
+new file mode 100755
+index 0000000..f6de143
+--- /dev/null
++++ b/testbin/at-waitpid-efault/.gitignore
+@@ -0,0 +1,2 @@
++# Ignore the compiled executable for each testbin
++at-waitpid-efault
+diff --git a/testbin/at-waitpid-efault/Makefile b/testbin/at-waitpid-efault/Makefile
+new file mode 100755
+index 0000000..e7455a4
+--- /dev/null
++++ b/testbin/at-waitpid-efault/Makefile
+@@ -0,0 +1,6 @@
++# Makefile for at-waitpid-efault
++
++SRCS-y=at-waitpid-efault.c
++TARGET_NAME=at-waitpid-efault
++
++include ../../mk/build-testbin.mk
+diff --git a/testbin/at-waitpid-efault/at-waitpid-efault.c b/testbin/at-waitpid-efault/at-waitpid-efault.c
+new file mode 100755
+index 0000000..eb59a37
+--- /dev/null
++++ b/testbin/at-waitpid-efault/at-waitpid-efault.c
+@@ -0,0 +1,33 @@
++/*
++ * at-waitpid-efault - Checks that waitpid will return EFAULT when we pass a
++ * pointer to kernel space as the status argument.
++ */
++
++/* Include some standard headers (add more as needed) */
++#include <unistd.h>
++#include <string.h>
++#include <stdlib.h>
++#include <stdio.h>
++#include <err.h>
++#include <errno.h>
++
++#include "../at-helpers/at-helpers.h"
++
++int
++main() {
++    pid_t pid = fork();
++    if(pid < 0 || errno != 0) {
++        at_fatal_error("fork()");
++        return 0;
++    }
++
++    /* Parent code */
++    if(pid) {
++        /* On MIPS, this is in kernel space */
++        int *status = (int*)0xF00DF00D;
++
++        int err = waitpid(pid, status, 0);
++        
++        at_expect_error(err);
++    }
++}
+diff --git a/testbin/at-waitpid-exitcodes/.gitignore b/testbin/at-waitpid-exitcodes/.gitignore
+new file mode 100755
+index 0000000..ba4e625
+--- /dev/null
++++ b/testbin/at-waitpid-exitcodes/.gitignore
+@@ -0,0 +1,2 @@
++# Ignore the compiled executable for each testbin
++at-waitpid-exitcodes
+diff --git a/testbin/at-waitpid-exitcodes/Makefile b/testbin/at-waitpid-exitcodes/Makefile
+new file mode 100755
+index 0000000..abd4750
+--- /dev/null
++++ b/testbin/at-waitpid-exitcodes/Makefile
+@@ -0,0 +1,6 @@
++# Makefile for at-waitpid-exitcodes
++
++SRCS-y=at-waitpid-exitcodes.c
++TARGET_NAME=at-waitpid-exitcodes
++
++include ../../mk/build-testbin.mk
+diff --git a/testbin/at-waitpid-exitcodes/at-waitpid-exitcodes.c b/testbin/at-waitpid-exitcodes/at-waitpid-exitcodes.c
+new file mode 100755
+index 0000000..992625c
+--- /dev/null
++++ b/testbin/at-waitpid-exitcodes/at-waitpid-exitcodes.c
+@@ -0,0 +1,91 @@
++/*
++ * at-waitpid-exitcodes - Makes sure that we can get the correct exit code from
++ * each child process.
++ */
++
++/* Include some standard headers (add more as needed) */
++#include <unistd.h>
++#include <string.h>
++#include <stdlib.h>
++#include <stdio.h>
++#include <err.h>
++
++#include "../at-helpers/at-helpers.h"
++
++int
++do_computation(int input_value) {
++    int value = input_value * 3 + 4;
++    /* We only require you support exit codes 0-255. */
++    value &= 0xFF;
++    return value;
++}
++
++#define CHILD_COUNT 8
++
++static int global_data = 0;
++
++void
++child() {
++    /* Make the child wait slightly */
++    sleep(1);
++
++    /* Communicate do_computation through _exit */
++    _exit(do_computation(global_data));
++} 
++
++int
++main() {
++    pid_t pids[CHILD_COUNT];
++    /* Used to keep track of exit codes */
++    int input_values[CHILD_COUNT];
++
++    /* Create several child processes, have them do a computation, and then
++     * communicate that to us through the return code. */
++    for(int i = 0; i < CHILD_COUNT; ++i) {
++        /* Create somewhat interesting input values for the computation */
++        global_data += 1;
++        global_data *= 5;
++        input_values[i] = global_data;
++
++        pids[i] = fork();
++        
++        if(pids[i] < 0 || errno != 0) {
++            /* This fork() MUST succeed for the test. The OS should be able to
++             * support at least ~10 processes so this shouldn't be a burden. */
++            at_fatal_error("fork()");
++            return 0;
++        }
++
++        if(pids[i] == 0) { 
++            /* Child process--run child logic */
++            child();
++            printf("OOPS SHOULDNT BE HERE\n");
++            /* If we get to this return, the _exit wasn't called properly, 
++             * and test will end up failed. */
++            return 0;
++        }
++
++        /* If we're the parent, we'll just loop around again. */
++    }
++
++    /* Now that all the children are created, we can waitpid() all of them
++     * and make sure that the data is correct. */
++    for(int i = 0; i < CHILD_COUNT; ++i) {
++        int status;
++        int err = waitpid(pids[i], &status, 0);
++        if(err < 0 || errno != 0) {
++            /* This waitpid() MUST succeed for the test. There is no real
++             * reason it should fail. */
++            at_fatal_error("waitpid()");
++            return 0;
++        }
++
++        /* Assume that the lower 8 bits of status are the exit code. */
++        status &= 0xFF;
++
++        int compare = do_computation(input_values[i]);
++        printf("CHILD %d: status: %3d, correct: %3d\n", i, status, compare);
++        printf("SOURCE FILE STATUS ADDRESS %p\n", &status);
++
++    }
++}
+diff --git a/testbin/at-waitpid-nochild/.gitignore b/testbin/at-waitpid-nochild/.gitignore
+new file mode 100755
+index 0000000..092457f
+--- /dev/null
++++ b/testbin/at-waitpid-nochild/.gitignore
+@@ -0,0 +1,2 @@
++# Ignore the compiled executable for each testbin
++at-waitpid-nochild
+diff --git a/testbin/at-waitpid-nochild/Makefile b/testbin/at-waitpid-nochild/Makefile
+new file mode 100755
+index 0000000..774cfea
+--- /dev/null
++++ b/testbin/at-waitpid-nochild/Makefile
+@@ -0,0 +1,6 @@
++# Makefile for at-waitpid-nochild
++
++SRCS-y=at-waitpid-nochild.c
++TARGET_NAME=at-waitpid-nochild
++
++include ../../mk/build-testbin.mk
+diff --git a/testbin/at-waitpid-nochild/at-waitpid-nochild.c b/testbin/at-waitpid-nochild/at-waitpid-nochild.c
+new file mode 100755
+index 0000000..e4e6e78
+--- /dev/null
++++ b/testbin/at-waitpid-nochild/at-waitpid-nochild.c
+@@ -0,0 +1,49 @@
++/*
++ * at-waitpid-nochild - Tests that waitpid returns some error code if we wait
++ * on a nonsense PID.
++ * 
++ * This test is not very specific. waitpid() is supposed to be somewhat open
++ * ended. So the only thing we test is the following: If we waitpid() on a PID
++ * that does not exist at all in the system, then SOME error code should be 
++ * returned. We don't care which errno, just that it is non-zero.
++ */
++
++/* Include some standard headers (add more as needed) */
++#include <unistd.h>
++#include <string.h>
++#include <stdlib.h>
++#include <stdio.h>
++#include <err.h>
++#include <errno.h>
++
++#include "../at-helpers/at-helpers.h"
++
++int
++main() {
++    /* We need to fabricate a PID that definitely doesn't exist in the system.
++     *
++     * If we are being run by the automated tester, the only processes that
++     * exist in the system are:
++     * 1) Ourselves
++     * 2) Possibly our parent, if the OS menu thread is considered a "process"
++     *    in your implementation.
++     * 
++     * So the only 2 VALID pids in the entire system should be getpid() and
++     * getppid(), and as long as the pid we try to use doesn't match those,
++     * it should be fine. */
++
++    pid_t invalid = 0xF00D;
++    for(;;) {
++        /* Mutate the PID until it doesn't match getpid() or getppid(). */
++        if(invalid == getpid()) { invalid += 1; continue; }
++        if(invalid == getppid()) { invalid += 1; continue; }
++        break;
++    }
++
++    /* Now, we can perform the waitpid. */
++    int err = waitpid(invalid, NULL, 0);
++    /* It should return an error. */
++    at_expect_error(err);
++
++    return 0;
++}
+diff --git a/testbin/at-waitpid-waits/.gitignore b/testbin/at-waitpid-waits/.gitignore
+new file mode 100755
+index 0000000..f714f5a
+--- /dev/null
++++ b/testbin/at-waitpid-waits/.gitignore
+@@ -0,0 +1,2 @@
++# Ignore the compiled executable for each testbin
++at-waitpid-waits
+diff --git a/testbin/at-waitpid-waits/Makefile b/testbin/at-waitpid-waits/Makefile
+new file mode 100755
+index 0000000..92999bb
+--- /dev/null
++++ b/testbin/at-waitpid-waits/Makefile
+@@ -0,0 +1,6 @@
++# Makefile for at-waitpid-waits
++
++SRCS-y=at-waitpid-waits.c
++TARGET_NAME=at-waitpid-waits
++
++include ../../mk/build-testbin.mk
+diff --git a/testbin/at-waitpid-waits/at-waitpid-waits.c b/testbin/at-waitpid-waits/at-waitpid-waits.c
+new file mode 100755
+index 0000000..4407514
+--- /dev/null
++++ b/testbin/at-waitpid-waits/at-waitpid-waits.c
+@@ -0,0 +1,41 @@
++/*
++ * at-waitpid-waits - Checks that waitpid is able to actually wait for the
++ * child process.
++ */
++
++/* Include some standard headers (add more as needed) */
++#include <unistd.h>
++#include <string.h>
++#include <stdlib.h>
++#include <stdio.h>
++#include <err.h>
++
++#include "../at-helpers/at-helpers.h"
++
++int
++main() {
++    pid_t pid = fork();
++    if(pid < 0 || errno != 0) {
++        at_fatal_error("fork()");
++        return 0;
++    }
++
++    if(pid) {
++        /* Parent waits for the child, then prints out a message. */
++        int code = waitpid(pid, NULL, 0);
++        if(code < 0) {
++            at_fatal_error("waitpid()");
++            return 0;
++        }
++        printf("PARENT\n");
++     
++         /* The parent message should appear after the child message. */
++    }
++    else {
++        /* Child waits, then prints out a message. */
++        sleep(3);
++        printf("CHILD\n");
++    }
++
++    return 0;
++}
+diff --git a/testbin/forktest/forktest.c b/testbin/forktest/forktest.c
+index 50624df..8dacc72 100644
+--- a/testbin/forktest/forktest.c
++++ b/testbin/forktest/forktest.c
+@@ -87,7 +87,7 @@ dowait(int nowait, int pid)
+ 		if (waitpid(pid, &x, 0)<0) {
+ 			warn("waitpid");
+ 		}
+-		else if (x!=0) {
++		else if (x==0) {
+ 			warnx("pid %d: exit %d", pid, x);
+ 		}
+ 	}
+@@ -130,7 +130,6 @@ test(int nowait)
+ 	dowait(nowait, pid2);
+ 	dowait(nowait, pid1);
+ 	dowait(nowait, pid0);
+-
+ 	putchar('\n');
+ }
+ 

@@ -1,0 +1,460 @@
+Script started on 2025-05-05 22:54:13-04:00
+bash-4.4$ ./pa2-test.sh [C[C[C[C[C[C[C[C[C[C[6Pmake -j8cd os161/[1Pmake -j8odule load sys161/2.0.8[C[C[C[C[C[C[C[C[C[C[10P./pa2-test.sh [C[C[C[C[C[C[C[C[C[Cmodule load sys161/2.0.8[C[C[C[C[C[C[C[C[C[C[10P./pa2-test.sh at-getppid-stable[K[C[C[C[C[C[C[C[C[C[Cls[Kcd ..sys161 kernel p /testbin/forktesadd 2 3 [C[C[C[C[C[C[C[C[C[Cmake -j8[Ksys161 kernel p /testbin/add 2 3 [K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K
+sys161: System/161 release 2.0.8, compiled Jan 10 2022 16:03:24
+
+OS/161 base system version 1.11gmu
+Copyright (c) 2000, 2001, 2002, 2003
+   President and Fellows of Harvard College.  All rights reserved.
+
+Hello World
+Put-your-group-name-here's system version 0 (ASST2 #986)
+
+Cpu is MIPS r2000/r3000
+16200k physical memory available
+Device probe...
+lamebus0 (system main bus)
+emu0 at lamebus0
+ltimer0 at lamebus0
+hardclock on ltimer0 (80 hz)
+beep0 at ltimer0
+rtclock0 at ltimer0
+lrandom0 at lamebus0
+random0 at lrandom0
+lhd0 at lamebus0
+lhd1 at lamebus0
+lser0 at lamebus0
+con0 at lser0
+pseudorand0 (virtual)
+
+OS/161 kernel [? for menu]: 
+tt1
+Starting thread test...
+012355555555555555555555555555555555555555555555555555555555555555555555555566666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666677777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777700000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111112222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222233333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333444444444444444444445555555555555555555555555555555555555555555555554444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444
+Thread test done.
+Operation took 0.643803360 seconds
+OS/161 kernel [? for menu]: 
+tt2
+Starting thread test 2...
+0123456701235647
+Thread test 2 done.
+Operation took 0.656374760 seconds
+OS/161 kernel [? for menu]: 
+tt3
+Starting thread test 3 (5 [sleepalots], 2 {computes}, 1 waker)
+[2][1][3][0][2][3]{1: 2}{0: 199}[3][4][2][0]{1: 9}{0: 143}[1][3][0][4][2][3][0]{1: 74}[1][4][2]{0: 226}[0][3][1]{1: 208}[3][2]{0: 160}[0][1][4][3][1]{1: 106}[2]{0: 52}[4][1][3][0][2][1]{1: 26}[4][0]{0: 7}[1][2][3][4]{1: 102}[3][0][1]{0: 32}[1][2]{1: 184}[4][0]{0: 18}[1][3][2][1]{1: 193}[0][3][2]{0: 137}[0][1][2][0][4][1]{1: 90}{0: 103}[3][2][4][1][0][2][1][3][4][0][1][4][2][0][1][3][3][4][1][3][0][2][4][3][2][4][0][3][2][4][0][2][4][4][4][0][4]
+Thread test 3 done
+Operation took 13.945617080 seconds
+OS/161 kernel [? for menu]: 
+exit
+Shutting down.
+The system is halted.
+sys161: 1268942150 cycles (508848337 run, 760093813 global-idle)
+sys161:   cpu0: 378267601 kern, 0 user, 0 idle; 0 ll, 0/0 sc, 0 sync
+sys161: 5973 irqs 0 exns 0r/0w disk 17r/2417w console 0r/0w/1m emufs 0r/0w net
+sys161: Elapsed real time: 35.944341 seconds (35.303 mhz)
+sys161: Elapsed virtual time: 45.538792924 seconds (25 mhz)
+bash-4.4$ ls
+bin  DISK1.img	DISK2.img  include  kernel  Makefile  output-errors.txt  output.txt  pa2-test-output  sbin  sys161.conf  testbin  typescript
+bash-4.4$ mv typescript ../asst2-part2/tt.script
+bash-4.4$ ls
+bin  DISK1.img	DISK2.img  include  kernel  Makefile  output-errors.txt  output.txt  pa2-test-output  sbin  sys161.conf  testbin
+bash-4.4$ cd ..
+bash-4.4$ ls
+asst0	     asst2-part2  configure	     include   man	    pdoyne-asst2-part1.tar.gz  stoplight-check	  sys161-default.conf
+asst1-part1  bin	  COPYING	     kern      mk	    README.md		       stoplight-test.sh  testbin
+asst1-part2  CHANGES	  create-testbin.sh  lib       pa2-check    root		       stoplight-timeout  userspace-programs.mk
+asst2-part1  compile	  fetch-updates.sh   Makefile  pa2-test.sh  sbin		       submit.sh
+bash-4.4$ cd asst2-part2
+bash-4.4$ ls
+design.txt  tt.script
+bash-4.4$ cd ..
+bash-4.4$ ls
+asst0	     asst2-part2  configure	     include   man	    pdoyne-asst2-part1.tar.gz  stoplight-check	  sys161-default.conf
+asst1-part1  bin	  COPYING	     kern      mk	    README.md		       stoplight-test.sh  testbin
+asst1-part2  CHANGES	  create-testbin.sh  lib       pa2-check    root		       stoplight-timeout  userspace-programs.mk
+asst2-part1  compile	  fetch-updates.sh   Makefile  pa2-test.sh  sbin		       submit.sh
+bash-4.4$ script
+Script started, file is typescript
+bash-4.4$ ./pa2-test.sh 
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/kern/kernel
+[32mCC      (B[m/home/pdoyne/CS571/os161-asst2/os161/kern/userprog/waitpid.c
+/home/pdoyne/CS571/os161-asst2/os161/kern/userprog/waitpid.c: In function 'sys_waitpid':
+/home/pdoyne/CS571/os161-asst2/os161/kern/userprog/waitpid.c:21:20: warning: unused variable 'child' [-Wunused-variable]
+     struct thread *child = (struct thread*) array_getguy(processes,pid);
+                    ^
+[36mGEN     (B[m/home/pdoyne/CS571/os161-asst2/os161/kern/compile/vers.c
+*** This is ASST2 build #987 ***
+[32mCC      (B[m/home/pdoyne/CS571/os161-asst2/os161/kern/compile/vers.c
+[35mLINK    (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/kern/kernel
+[34mINSTALL (B[m/home/pdoyne/CS571/os161-asst2/os161/root/kernel
+Running test at-getpid-simple     ... [32mSUCCESS(B[m
+Running test at-fork-pidagree     ... [32mSUCCESS(B[m
+Running test at-fork-limit        ... [32mSUCCESS(B[m
+Running test at-getppid-stable    ... [31mFAILED(B[m
+in root/pa2-test-output/at-getppid-stable-output.txt:
+[1m[31merror: [0m[1mMissing 2 copies of the line (expected 5): 
+      'CALLED getppid(): %d'
+[0m[1m[0m
+[1mNote: See root/pa2-test-output/at-getppid-stable-errors.txt to review output.
+[0m
+Running test at-waitpid-waits     ... [32mSUCCESS(B[m
+Running test at-waitpid-exitcodes ... [32mSUCCESS(B[m
+Running test at-waitpid-nochild   ... [32mSUCCESS(B[m
+Running test at-waitpid-efault    ... [32mSUCCESS(B[m
+Running test at-execv-simple      ... [32mSUCCESS(B[m
+Running test at-execv-add         ... [31mFAILED(B[m
+in root/pa2-test-output/at-execv-add-output.txt:
+[1m[31merror: [0m[1mMissing expected line: 
+      'SUM: 459'
+[0m[1m[0m
+[1mNote: Suppressed 1 additional error. See root/pa2-test-output/at-execv-add-errors.txt for all errors.
+[0m
+Running test at-execv-efault-arg  ... [32mSUCCESS(B[m
+Running test at-exit-exits        ... [32mSUCCESS(B[m
+Running test at-parameter-passing ... [32mSUCCESS(B[m
+bash-4.4$ exit
+exit
+Script done, file is typescript
+bash-4.4$ ls
+asst0	     asst2-part2  configure	     include   man	    pdoyne-asst2-part1.tar.gz  stoplight-check	  sys161-default.conf
+asst1-part1  bin	  COPYING	     kern      mk	    README.md		       stoplight-test.sh  testbin
+asst1-part2  CHANGES	  create-testbin.sh  lib       pa2-check    root		       stoplight-timeout  typescript
+asst2-part1  compile	  fetch-updates.sh   Makefile  pa2-test.sh  sbin		       submit.sh	  userspace-programs.mk
+bash-4.4$ rm typescript 
+bash-4.4$ ls
+asst0	     asst2-part2  configure	     include   man	    pdoyne-asst2-part1.tar.gz  stoplight-check	  sys161-default.conf
+asst1-part1  bin	  COPYING	     kern      mk	    README.md		       stoplight-test.sh  testbin
+asst1-part2  CHANGES	  create-testbin.sh  lib       pa2-check    root		       stoplight-timeout  userspace-programs.mk
+asst2-part1  compile	  fetch-updates.sh   Makefile  pa2-test.sh  sbin		       submit.sh
+bash-4.4$ lsrm typescript [C[C[C[C[C[C[C[C[C[Cls[Kscript[4Plscd ..[3Plscd asst2-part2[C[C[C[C[C[C[C[C[C[Cls[Kcd ..[3Plsmv typescript ../asst2-part2/tt.script[C[C[C[C[C[C[C[C[C[Cls[Ksys161 kernel [C[C[C[C[C[C[C[C[C[C./pa2-test.sh[C
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/kern/kernel
+[36mGEN     (B[m/home/pdoyne/CS571/os161-asst2/os161/kern/compile/vers.c
+*** This is ASST2 build #988 ***
+[32mCC      (B[m/home/pdoyne/CS571/os161-asst2/os161/kern/compile/vers.c
+[35mLINK    (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/kern/kernel
+[34mINSTALL (B[m/home/pdoyne/CS571/os161-asst2/os161/root/kernel
+Running test at-getpid-simple     ... [32mSUCCESS(B[m
+Running test at-fork-pidagree     ... [32mSUCCESS(B[m
+Running test at-fork-limit        ... [32mSUCCESS(B[m
+Running test at-getppid-stable    ... [31mFAILED(B[m
+in root/pa2-test-output/at-getppid-stable-output.txt:
+[1m[31merror: [0m[1mMissing 1 copies of the line (expected 5): 
+      'CALLED getppid(): %d'
+[0m[1m[0m
+[1mNote: See root/pa2-test-output/at-getppid-stable-errors.txt to review output.
+[0m
+Running test at-waitpid-waits     ... [32mSUCCESS(B[m
+Running test at-waitpid-exitcodes ... [32mSUCCESS(B[m
+Running test at-waitpid-nochild   ... [32mSUCCESS(B[m
+Running test at-waitpid-efault    ... [32mSUCCESS(B[m
+Running test at-execv-simple      ... [32mSUCCESS(B[m
+Running test at-execv-add         ... [31mFAILED(B[m
+in root/pa2-test-output/at-execv-add-output.txt:
+[1m[31merror: [0m[1mMissing expected line: 
+      'SUM: 197'
+[0m[1m[0m
+[1mNote: Suppressed 2 additional errors. See root/pa2-test-output/at-execv-add-errors.txt for all errors.
+[0m
+Running test at-execv-efault-arg  ... [32mSUCCESS(B[m
+Running test at-exit-exits        ... [32mSUCCESS(B[m
+Running test at-parameter-passing ... [32mSUCCESS(B[m
+bash-4.4$ ./pa2-test.sh 
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/kern/kernel
+[36mGEN     (B[m/home/pdoyne/CS571/os161-asst2/os161/kern/compile/vers.c
+*** This is ASST2 build #989 ***
+[32mCC      (B[m/home/pdoyne/CS571/os161-asst2/os161/kern/compile/vers.c
+[35mLINK    (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/kern/kernel
+[34mINSTALL (B[m/home/pdoyne/CS571/os161-asst2/os161/root/kernel
+Running test at-getpid-simple     ... [32mSUCCESS(B[m
+Running test at-fork-pidagree     ... [32mSUCCESS(B[m
+Running test at-fork-limit        ... [32mSUCCESS(B[m
+Running test at-getppid-stable    ... [32mSUCCESS(B[m
+Running test at-waitpid-waits     ... [32mSUCCESS(B[m
+Running test at-waitpid-exitcodes ... [32mSUCCESS(B[m
+Running test at-waitpid-nochild   ... [32mSUCCESS(B[m
+Running test at-waitpid-efault    ... [32mSUCCESS(B[m
+Running test at-execv-simple      ... [32mSUCCESS(B[m
+Running test at-execv-add         ... [31mFAILED(B[m
+in root/pa2-test-output/at-execv-add-output.txt:
+[1m[31merror: [0m[1mMissing expected line: 
+      'SUM: 85'
+[0m[1m[0m
+[1mNote: Suppressed 3 additional errors. See root/pa2-test-output/at-execv-add-errors.txt for all errors.
+[0m
+Running test at-execv-efault-arg  ... [32mSUCCESS(B[m
+Running test at-exit-exits        ... [32mSUCCESS(B[m
+Running test at-parameter-passing ... [32mSUCCESS(B[m
+bash-4.4$ ./pa2-test.sh [C[C[C[C[C[C[C[C[C[Cls[K./pa2-test.sh [C[C[C[C[C[C[C[C[C[C[K./pa2-test.sh [C[C[C[C[C[C[C[C[C[C[Kscript
+Script started, file is typescript
+bash-4.4$ exit./pa2-test.sh 
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/kern/kernel
+[36mGEN     (B[m/home/pdoyne/CS571/os161-asst2/os161/kern/compile/vers.c
+*** This is ASST2 build #990 ***
+[32mCC      (B[m/home/pdoyne/CS571/os161-asst2/os161/kern/compile/vers.c
+[35mLINK    (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/kern/kernel
+[34mINSTALL (B[m/home/pdoyne/CS571/os161-asst2/os161/root/kernel
+Running test at-getpid-simple     ... [32mSUCCESS(B[m
+Running test at-fork-pidagree     ... [32mSUCCESS(B[m
+Running test at-fork-limit        ... [32mSUCCESS(B[m
+Running test at-getppid-stable    ... [32mSUCCESS(B[m
+Running test at-waitpid-waits     ... [32mSUCCESS(B[m
+Running test at-waitpid-exitcodes ... [32mSUCCESS(B[m
+Running test at-waitpid-nochild   ... [32mSUCCESS(B[m
+Running test at-waitpid-efault    ... [32mSUCCESS(B[m
+Running test at-execv-simple      ... [32mSUCCESS(B[m
+Running test at-execv-add         ... [31mFAILED(B[m
+in root/pa2-test-output/at-execv-add-output.txt:
+[1m[31merror: [0m[1mMissing expected line: 
+      'SUM: 85'
+[0m[1m[0m
+[1mNote: Suppressed 3 additional errors. See root/pa2-test-output/at-execv-add-errors.txt for all errors.
+[0m
+Running test at-execv-efault-arg  ... [32mSUCCESS(B[m
+Running test at-exit-exits        ... [32mSUCCESS(B[m
+Running test at-parameter-passing ... [32mSUCCESS(B[m
+bash-4.4$ exit
+exit
+Script done, file is typescript
+bash-4.4$ mv typescript /asst2-part2/autotester.script
+mv: cannot move 'typescript' to '/asst2-part2/autotester.script': No such file or directory
+bash-4.4$ mv typescript /asst2-part2/autotester.script[1Passt2-part2/autotester.script[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C
+bash-4.4$ ls
+asst0	     asst2-part2  configure	     include   man	    pdoyne-asst2-part1.tar.gz  stoplight-check	  sys161-default.conf
+asst1-part1  bin	  COPYING	     kern      mk	    README.md		       stoplight-test.sh  testbin
+asst1-part2  CHANGES	  create-testbin.sh  lib       pa2-check    root		       stoplight-timeout  userspace-programs.mk
+asst2-part1  compile	  fetch-updates.sh   Makefile  pa2-test.sh  sbin		       submit.sh
+bash-4.4$ cd asst2-part2
+bash-4.4$ ls
+autotester.script  design.txt  tt.script
+bash-4.4$ git commit -am "Completed project-2"
+[main 23da722] Completed project-2
+ Committer: Patrick Thomas Doyne <pdoyne@zeus-1.cec.gmu.edu>
+Your name and email address were configured automatically based
+on your username and hostname. Please check that they are accurate.
+You can suppress this message by setting them explicitly. Run the
+following command and follow the instructions in your editor to edit
+your configuration file:
+
+    git config --global --edit
+
+After doing this, you may fix the identity used for this commit with:
+
+    git commit --amend --reset-author
+
+ 17 files changed, 279 insertions(+), 32 deletions(-)
+bash-4.4$ git tag asst2-end
+bash-4.4$ git diff asst2-begin asst2-end > asst2-part2/asst2.diff
+bash: asst2-part2/asst2.diff: No such file or directory
+bash-4.4$ ls
+autotester.script  design.txt  tt.script
+bash-4.4$ cd ..
+bash-4.4$ l
+bash: l: command not found
+bash-4.4$ ls
+asst0	     asst2-part2  configure	     include   man	    pdoyne-asst2-part1.tar.gz  stoplight-check	  sys161-default.conf
+asst1-part1  bin	  COPYING	     kern      mk	    README.md		       stoplight-test.sh  testbin
+asst1-part2  CHANGES	  create-testbin.sh  lib       pa2-check    root		       stoplight-timeout  userspace-programs.mk
+asst2-part1  compile	  fetch-updates.sh   Makefile  pa2-test.sh  sbin		       submit.sh
+bash-4.4$ ls[Kcd ..[3Plsgit diff asst2-begin asst2-end > asst2-part2/asst2.diff
+bash-4.4$ cd asst2-part2
+bash-4.4$ ls
+asst2.diff  autotester.script  design.txt  tt.script
+bash-4.4$ code asst2.diff 
+bash-4.4$ ls
+asst2.diff  autotester.script  design.txt  tt.script
+bash-4.4$ cd ..
+bash-4.4$ ./submit.sh
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/kern/kernel
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/kern/*.o
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/kern/*.d
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/kern/compile/*.h
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/kern/compile/*.c
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/lib/libc/libc.a
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/lib/libc/*.o
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/lib/libc/*.d
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/lib/libc/syscalls.S
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/lib/crt0/crt0.o
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/lib/crt0/*.o
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/lib/crt0/*.d
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/forkbomb/forkbomb
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/at-fork-pidagree/at-fork-pidagree
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/at-args-noargv0/at-args-noargv0
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/at-execv-add/at-execv-add
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/hash/hash
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/rmtest/rmtest
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/at-waitpid-exitcodes/at-waitpid-exitcodes
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/ctest/ctest
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/hash/*.o
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/rmtest/*.o
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/at-args-noargv0/*.o
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/at-execv-add/*.o
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/at-waitpid-exitcodes/*.o
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/at-fork-pidagree/*.o
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/rmtest/*.d
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/at-fork-pidagree/*.d
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/at-args-noargv0/*.d
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/at-waitpid-exitcodes/*.d
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/at-execv-add/*.d
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/hash/*.d
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/forkbomb/*.o
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/ctest/*.o
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/at-fork-pidagree/depend.mk
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/at-waitpid-exitcodes/depend.mk
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/at-execv-add/depend.mk
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/rmtest/depend.mk
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/at-args-noargv0/depend.mk
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/hash/depend.mk
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/forkbomb/*.d
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/ctest/*.d
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/crash/crash
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/at-add/at-add
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/at-execv-efault-arg/at-execv-efault-arg
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/crash/*.o
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/at-add/*.o
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/ctest/depend.mk
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/sink/sink
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/at-getpid-simple/at-getpid-simple
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/hog/hog
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/at-add/*.d
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/tail/tail
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/at-getpid-simple/*.o
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/at-execv-efault-arg/*.o
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/tail/*.o
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/at-add/depend.mk
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/sink/*.o
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/forkbomb/depend.mk
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/crash/*.d
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/hog/*.o
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/sort/sort
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/at-execv-simple/at-execv-simple
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/at-execv-simple/*.o
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/at-getpid-simple/*.d
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/sink/*.d
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/sort/*.o
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/tail/*.d
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/crash/depend.mk
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/hog/*.d
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/at-execv-efault-arg/*.d
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/at-execv-simple/*.d
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/hog/depend.mk
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/sort/*.d
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/tail/depend.mk
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/at-getpid-simple/depend.mk
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/at-execv-efault-arg/depend.mk
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/sink/depend.mk
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/at-execv-simple/depend.mk
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/sort/depend.mk
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/palin/palin
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/conman/conman
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/argtest/argtest
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/tictac/tictac
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/tictac/*.o
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/argtest/*.o
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/guzzle/guzzle
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/rmdirtest/rmdirtest
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/farm/farm
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/matmult/matmult
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/tictac/*.d
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/conman/*.o
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/guzzle/*.o
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/palin/*.o
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/argtest/*.d
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/matmult/*.o
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/tictac/depend.mk
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/farm/*.o
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/guzzle/*.d
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/conman/*.d
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/palin/*.d
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/argtest/depend.mk
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/farm/*.d
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/palin/depend.mk
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/matmult/*.d
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/conman/depend.mk
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/forktest/forktest
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/f_test/f_test
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/forktest/*.o
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/farm/depend.mk
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/guzzle/depend.mk
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/f_test/*.o
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/rmdirtest/*.o
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/matmult/depend.mk
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/add/add
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/parallelvm/parallelvm
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/sty/sty
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/faulter/faulter
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/at-fork-limit/at-fork-limit
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/rmdirtest/*.d
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/forktest/*.d
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/parallelvm/*.o
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/rmdirtest/depend.mk
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/sty/*.o
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/add/*.o
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/forktest/depend.mk
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/parallelvm/*.d
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/f_test/*.d
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/at-fork-limit/*.o
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/faulter/*.o
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/sty/*.d
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/parallelvm/depend.mk
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/add/*.d
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/f_test/depend.mk
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/bigfile/bigfile
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/badcall/badcall
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/at-waitpid-waits/at-waitpid-waits
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/at-waitpid-waits/*.o
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/at-fork-limit/*.d
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/sty/depend.mk
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/faulter/*.d
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/add/depend.mk
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/badcall/*.o
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/at-getppid-stable/at-getppid-stable
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/bigfile/*.o
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/at-waitpid-waits/*.d
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/faulter/depend.mk
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/at-getppid-stable/*.o
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/kitchen/kitchen
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/dirseek/dirseek
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/kitchen/*.o
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/at-getppid-stable/*.d
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/bigfile/*.d
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/at-fork-limit/depend.mk
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/at-waitpid-waits/depend.mk
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/at-args/at-args
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/kitchen/*.d
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/filetest/filetest
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/filetest/*.o
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/bigfile/depend.mk
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/kitchen/depend.mk
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/dirseek/*.o
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/at-getppid-stable/depend.mk
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/at-args/*.o
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/dirseek/*.d
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/filetest/*.d
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/dirtest/dirtest
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/dirconc/dirconc
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/at-waitpid-efault/at-waitpid-efault
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/huge/huge
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/huge/*.o
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/at-waitpid-efault/*.o
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/dirseek/depend.mk
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/at-args/*.d
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/filetest/depend.mk
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/dirconc/*.o
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/at-args/depend.mk
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/at-waitpid-efault/*.d
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/dirtest/*.o
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/huge/*.d
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/at-waitpid-nochild/at-waitpid-nochild
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/at-waitpid-nochild/*.o
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/dirconc/*.d
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/huge/depend.mk
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/dirtest/*.d
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/at-waitpid-efault/depend.mk
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/at-exit-exits/at-exit-exits
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/bin/false/false
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/bin/ln/ln
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/at-waitpid-nochild/*.d
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/bin/ln/*.o
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/bin/false/*.o
+[33mCLEAN   (B[m/home/pdoyne/CS571/os161-asst2/os161/compile/testbin/at-exit-exits/*.o
+[33mCLEAN   (B[m/home/pdoyne/

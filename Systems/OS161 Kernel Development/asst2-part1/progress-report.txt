@@ -1,0 +1,24 @@
+Patrick Doyne
+G#01355212
+Date: 04/11/2025
+
+PROGRESS REPORT:
+
+I began by doing a quick skim of all the files in the directories I have used to refresh my memory and then began reading the project description. As 
+I answered the code-reading questions I made note of important interworkings between the files such as file types, syscall, user space(split into data and code)
+and kernel space. Similarly I was able to see the values of exception codes and how the trap table fits together with SYSCALL(symbl,num) to interface between
+the kernel and userland. 
+
+After these questions were finished I made my way reading through the rest of the document and examining mentioned directories/files. I created a rough
+ordering of attack for how I will implement things on my end. I will start with fork and exec since they are the heart of the project, then move to getpid and 
+getppid then finish with exit and waitpid. However, before doing this it is important to go through the man pages for each one as I do each. This will allow
+for me to follow proper exception codes and return values. I am still trying to make exact sense of how to test things and where to put things, but so far the 
+general idea seems to be okay. I will have to investigate the use of functions from different files and take my time drawing out what the OS looks like internally
+to enable a more concise solution to form.
+
+As of now my understanding is unistd.h contains the definitions for what a user program would include in their source code to start a system call, and
+kern/include/syscall.h will include all of the definitions for my own programmer created system call implementations. Then the actual implementation of these
+system calls will be placed in the userprog directory which will hold a source file for each of the syscalls for neatness. Each will include this syscall.h
+header file as well. Also while devloping this I should note callno.h contains the syscall numbers and should also be in each of the source files.
+
+
