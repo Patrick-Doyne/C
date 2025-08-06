@@ -8,7 +8,7 @@ This directory highlights expertise in working close to the hardware, demonstrat
 
 - **C Programming Samples:** Code illustrating memory management, pointer arithmetic, and efficient data handling.
 - **IEEE-Like Systems Work:** Projects that interface with microcontrollers or custom hardware.
-- **Performance Tuning:** Demonstrations of profiling, benchmarking, and optimizing software at the instruction level.
+- **Performance Tuning:** Demonstrations of profiling, benchmarking, and optimizing software at a low level.
 
 These materials are intended to demonstrate proficiency in foundational programming skills, critical for roles requiring a deep understanding of how software interacts with hardware.
 
