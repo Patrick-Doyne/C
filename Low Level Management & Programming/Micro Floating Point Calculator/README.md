@@ -44,8 +44,7 @@ Implements a custom 9-bit floating-point type (`microfp_s`) in C to model IEEE-l
   - `isInfinity`, `isNaN`, `isNegative`, `isNormalized`, `isZero`  
 
 - Bit Extraction & Composition  
-  - `getE` (raw exponent)  
-  - `setBits` (assemble sign, exponent, fraction slices)  
+  - `getExp`, `getE`  
 
 - Binary Scientific Formatting  
   - `shiftLeft`, `shiftRight` with fractional-bit preservation  
@@ -53,6 +52,9 @@ Implements a custom 9-bit floating-point type (`microfp_s`) in C to model IEEE-l
 - Value Conversion  
   - `toMicroFP(Number_s)` → 9-bit compressed form  
   - `toNumber(microfp_s)` → full-precision struct  
+
+- Post-Arithmetic Packing  
+  - `toMicroAfterMath(Number_s result)` → clamps, normalizes, and calls `setBits`  
 
 - Arithmetic Operations  
   - `addMicroFP`, `subMicroFP` (via `negMicroFP` + `addMicroFP`)  
@@ -89,23 +91,25 @@ Implements a custom 9-bit floating-point type (`microfp_s`) in C to model IEEE-l
 
 | Function Name               | Role & Description                                                   |
 |-----------------------------|----------------------------------------------------------------------|
-| getE                        | Extracts raw exponent from compressed word                           |
-| setBits                     | Assembles final 9-bit word from sign, exponent, and fraction slices  |
 | isInfinity                  | Returns true if exponent bits all 1 and fraction == 0                |
 | isNaN                       | Returns true if exponent bits all 1 and fraction ≠ 0                 |
 | isNegative                  | Tests the sign bit                                                   |
 | isZero                      | True when exponent == 0 and fraction == 0                            |
 | isNormalized                | Checks exponent not zero (and not all-ones)                          |
+| getExp                      | Extracts biased exponent field from compressed word                  |
+| getE                        | Computes raw exponent `E` by subtracting bias                        |
 | shiftLeft                   | Left-shifts mantissa preserving fractional bits, adjusts exponent    |
 | shiftRight                  | Right-shifts mantissa preserving fractional bits, adjusts exponent   |
+| multSpecialArithmetic       | Handles all NaN, INF, zero cases for multiplication                  |
+| addSubSpecialArithmetic     | Handles all NaN, INF, zero cases for addition/subtraction            |
+| toMicroAfterMath            | Takes `Number_s` result, clamps/normalizes, then calls `setBits`     |
+| equalizeE                   | Aligns exponents of two `Number_s` operands before add/subtract      |
+| setBits                     | Assembles final 9-bit word from sign, exponent, and fraction slices  |
 | toMicroFP                   | Converts full-precision `Number_s` struct to `microfp_s`             |
 | toNumber                    | Converts `microfp_s` back to `Number_s` full-precision struct        |
-| equalizeE                   | Aligns exponents of two `Number_s` operands before add/subtract       |
-| addSubSpecialArithmetic     | Handles all NaN, INF, zero cases for addition/subtraction            |
-| multSpecialArithmetic       | Handles all NaN, INF, zero cases for multiplication                  |
+| mulMicroFP                  | Performs multiplication via `multSpecialArithmetic` and shifts       |
 | addMicroFP                  | Performs addition using `equalizeE`, `addSubSpecialArithmetic`, shifts|
 | subMicroFP                  | Negates second operand (`negMicroFP`) then calls `addMicroFP`        |
-| mulMicroFP                  | Performs multiplication via `multSpecialArithmetic` and shifts       |
 | negMicroFP                  | Flips sign bit of compressed `microfp_s`                             |
 
 ---
@@ -115,7 +119,7 @@ Implements a custom 9-bit floating-point type (`microfp_s`) in C to model IEEE-l
 - Operate directly on `Number_s` structs; no explicit allocation or deallocation.  
 - NULL pointers guarded; no runtime exceptions.  
 - All encoding/decoding via bitwise masks—no floating-point hardware ops.  
-- Fully covers edge cases: zero, negative zero, overflow (INF), invalid (NaN), and normalization limits.
+- Fully covers edge cases: zero, negative zero, overflow (INF), invalid (NaN), and normalization limits.  
 
 ---
 
