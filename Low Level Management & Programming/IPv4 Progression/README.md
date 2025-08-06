@@ -1,60 +1,45 @@
+# *IPv4 Directory Overview*
 
-*Directory Description*: 
-	
- 	- Contains an ordered set of programs that piggy back off one another to advance utility in various ways. Note: all files/programs are seperate and 		
- 	implementation progression is conceptually drawn on to create different more interesting programs.
-  
-*Broadly Speaking*: 
-   	
-	- These programs successfully mutate, sort, and store data pretaining to a typical internet I.P. address and username. Extra data fields can easily be 		 
-  	added.
-    
-*Shared Logic* :
-  
-  	- Variables and Methods:
-    	- IPv4 address: a quartet of intergers ranged 0-255 with a period as a delimeter between each inclusive pair-wise pair acting as a typical I.P address.  
-   	 	- Alias: a character respresentation of what would likely be a username for an employee, quest wifi user, etc   
-   	 	- The functionality of many core functions remains relatively the same, however, the implementation is vastly different.
- 
-  	- Input/Out and Storage:
-    	- Allows user to specify a file to store new information into a new file or import an existing file   
-    	- Allows user to save to a new file or override the current file    
-    	- Allows user to discard any changes and exit gracefully
- 
-  	- Error Checking:
-    	- Duplicates are ignored. Duplicates are classified as the following: matching alias [NO cap sensitivity] and/or matching Ipv4 addresses.   
-    	- IPv4 addresses must be an integer value between 0 and 255 and be seperated by periods otherwise entire current line in file is skipped and 
-     	we look for the next valid entry beginning at the start of the next line.   
-   	 	-Similarly, aliases must be a string of characters length 1-10 inclusive, thats not a duplicate, and does not contain one of the follow 
-     	characters: {'!', ... }
-  
-  	- Data Format:
-    	- All alias under length ten are padded to length ten with spsces.
-    	- All functions store, read, or use pairs in the format <IPv4, alias>
+## *Directory Description*  
+This directory features a series of progressively advanced programs designed to manage IPv4 addresses and associated usernames. Each file demonstrates increasingly sophisticated techniques in data management and user interaction, providing a clear pathway for skill development in systems programming.
 
-*IPv4 List*:
-     
-     - Contains a template conveying basic understanding of program flow, typeDef, and elementry I/O. Explores creating a basic terminal stdout UI with basic menu
-     options allowing a user to retrieve information through a basic text file. This file can contain errors, however, only within limits: {DONT FORGET TO 
-     UPDATE THIS LATER} it is designed for finding pairs of IPv4 addresses and  aliases, as defined in the shared logic above, and then stored in a 
-     user-defined list. Offers user an option to sort the list in either Ascending or Decsending order and (2) save a current list to an existing or new file 
-     so long as there is memory available.
+## *Overview*  
+The programs focus on mutation, sorting, and storage of IPv4 addresses and usernames. Their modular design supports easy extension, including additional data fields and functionality.
 
- *IPv4 BST*:
-     
-     - This project-folder contains a program that reads in a text file and creates a doubly linked BST from the contents within the file. 
-     Searches for IPv4 address and alias pairs within aforementioned constraints. Allows the user to select from a menu of options to 
-     alter, display, and even save the list after modification. Also offers memory leak protection.
+## *Shared Logic and Features*  
 
-*IPv4 MySql*:
+- **Variables and Methods:**  
+  - IPv4 addresses are stored as four integers (0–255), separated by periods, following standard conventions.
+  - Aliases represent usernames (such as employees or guest WiFi users) and are stored as character strings.
+  - Core functions offer consistent capabilities across implementations, with varied approaches for learning purposes.
 
-     - This project-folder contains a similar program to the one stored in IPv4 BST. Whats different? We no longer read in from a file to create the global list.
-     Instead we use the MySql API to connect to the Helios via Linux and read or create a table of the users choice. After intial creation from an sql table,
-     the global list can then be merged with other text files being read in. Additionally, anytime the global list is changed the user is given the option
-     to also reflect this change in the table we originally connected to. To save the entire current list this program offers: the options to save via a file or
-     to ANY sql table of choice. In both cases, creation is allowed.
+- **Input/Output and Storage:**  
+  - Users can specify files for storage or import.
+  - Save options include creating new files or overwriting existing ones.
+  - Changes can be discarded with a graceful exit.
 
-     - Summary: Same great functionality as the BST predecessor, but adds database utility on top.
+- **Error Handling:**  
+  - Duplicate entries (by alias or IPv4 address) are ignored, with case-insensitive matching for aliases.
+  - IPv4 addresses are validated for format and value range; invalid lines are skipped.
+  - Aliases must be unique, 1–10 characters, and free of forbidden characters.
+
+- **Data Format:**  
+  - Aliases shorter than 10 characters are padded for consistency.
+  - All functions use the format `<IPv4, alias>` for storing and retrieving information.
+
+## *Project Modules*
+
+- **IPv4 List:**  
+  Demonstrates program flow, typedef usage, and basic I/O. Includes a simple terminal UI for importing data from text files, error checking, and options for sorting and saving lists.
+
+- **IPv4 BST:**  
+  Reads text files to create a doubly linked binary search tree (BST) of IPv4 and alias pairs. Provides menu-driven options to modify, display, and save data, with memory management protections.
+
+- **IPv4 MySQL:**  
+  Connects to MySQL via Linux, enabling table creation and management. The global list can be merged with imported text data, and changes can be synced with the database. Users can save data to files or any SQL table.
+
+## *Summary*  
+This directory showcases foundational and advanced data management techniques, including file handling, validation, sorting, and database integration. It demonstrates core competencies in systems programming and backend development.
 
 #### NOTE: Functionality of IPv4 MySql program can be layered for a UI experience* (  Coming soon: Spring 2026 :)  )* ####
 
